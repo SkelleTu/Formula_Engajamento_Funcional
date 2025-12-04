@@ -300,37 +300,18 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
     }
   };
 
-  const unmuteVimeoOnInteraction = () => {
-    const iframe = document.getElementById('vimeo-player') as HTMLIFrameElement;
-    if (iframe && iframe.contentWindow) {
-      iframe.contentWindow.postMessage('{"method":"setVolume","value":1}', '*');
-      iframe.contentWindow.postMessage('{"method":"setMuted","value":false}', '*');
-      setIsMuted(false);
-    }
-    
-    document.removeEventListener('click', unmuteVimeoOnInteraction, true);
-    document.removeEventListener('scroll', unmuteVimeoOnInteraction, true);
-    document.removeEventListener('mousemove', unmuteVimeoOnInteraction, true);
-    document.removeEventListener('touchstart', unmuteVimeoOnInteraction, true);
-    document.removeEventListener('keydown', unmuteVimeoOnInteraction, true);
-  };
-  
   const setupVimeoVideo = () => {
     if (!videoConfig) return;
     
     setIsMuted(true);
     
-    document.addEventListener('click', unmuteVimeoOnInteraction, true);
-    document.addEventListener('scroll', unmuteVimeoOnInteraction, true);
-    document.addEventListener('mousemove', unmuteVimeoOnInteraction, true);
-    document.addEventListener('touchstart', unmuteVimeoOnInteraction, true);
-    document.addEventListener('keydown', unmuteVimeoOnInteraction, true);
-    
-    setTimeout(() => {
+    const tryUnmute = () => {
       const iframe = document.getElementById('vimeo-player') as HTMLIFrameElement;
       if (iframe && iframe.contentWindow) {
         iframe.contentWindow.postMessage('{"method":"play"}', '*');
-        
+        iframe.contentWindow.postMessage('{"method":"setVolume","value":1}', '*');
+        iframe.contentWindow.postMessage('{"method":"setMuted","value":false}', '*');
+        setIsMuted(false);
         setIsVideoStarted(true);
         
         hudOverlayTimeoutRef.current = setTimeout(() => {
@@ -339,7 +320,15 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
         
         trackVimeoProgress();
       }
-    }, 1000);
+    };
+    
+    if (document.readyState === 'complete') {
+      setTimeout(tryUnmute, 500);
+    } else {
+      window.addEventListener('load', () => {
+        setTimeout(tryUnmute, 500);
+      });
+    }
   };
 
   const trackVimeoProgress = () => {
