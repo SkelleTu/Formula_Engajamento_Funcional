@@ -304,6 +304,29 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
     if (!videoConfig) return;
     
     setIsMuted(true);
+    let hasStartedPlaying = false;
+    
+    const unmuteVideo = () => {
+      if (hasStartedPlaying) return;
+      hasStartedPlaying = true;
+      
+      setIsVideoStarted(true);
+      
+      autoUnmuteTimerRef.current = setTimeout(() => {
+        const iframe = document.getElementById('vimeo-player') as HTMLIFrameElement;
+        if (iframe && iframe.contentWindow) {
+          iframe.contentWindow.postMessage('{"method":"setVolume","value":1}', '*');
+          iframe.contentWindow.postMessage('{"method":"setMuted","value":false}', '*');
+          setIsMuted(false);
+        }
+      }, 300);
+      
+      hudOverlayTimeoutRef.current = setTimeout(() => {
+        setShowHudOverlay(false);
+      }, 5000);
+      
+      trackVimeoProgress();
+    };
     
     const handleVimeoMessage = (event: MessageEvent) => {
       if (event.origin !== 'https://player.vimeo.com') return;
@@ -311,24 +334,16 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
       try {
         const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
         
-        if (data.event === 'play' || data.event === 'playing') {
-          setIsVideoStarted(true);
-          
-          autoUnmuteTimerRef.current = setTimeout(() => {
-            const iframe = document.getElementById('vimeo-player') as HTMLIFrameElement;
-            if (iframe && iframe.contentWindow) {
-              iframe.contentWindow.postMessage('{"method":"setVolume","value":1}', '*');
-              iframe.contentWindow.postMessage('{"method":"setMuted","value":false}', '*');
-              setIsMuted(false);
-            }
-          }, 300);
-          
-          hudOverlayTimeoutRef.current = setTimeout(() => {
-            setShowHudOverlay(false);
-          }, 5000);
-          
-          trackVimeoProgress();
-          
+        if (data.event === 'ready') {
+          const iframe = document.getElementById('vimeo-player') as HTMLIFrameElement;
+          if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.postMessage('{"method":"addEventListener","value":"play"}', '*');
+            iframe.contentWindow.postMessage('{"method":"play"}', '*');
+          }
+        }
+        
+        if (data.event === 'play' || data.event === 'playProgress') {
+          unmuteVideo();
           window.removeEventListener('message', handleVimeoMessage);
         }
       } catch (e) {}
@@ -340,11 +355,17 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
       const iframe = document.getElementById('vimeo-player') as HTMLIFrameElement;
       if (iframe && iframe.contentWindow) {
         iframe.contentWindow.postMessage('{"method":"addEventListener","value":"play"}', '*');
-        iframe.contentWindow.postMessage('{"method":"addEventListener","value":"playing"}', '*');
-        
+        iframe.contentWindow.postMessage('{"method":"addEventListener","value":"playProgress"}', '*');
         iframe.contentWindow.postMessage('{"method":"play"}', '*');
       }
-    }, 1000);
+    }, 1500);
+    
+    setTimeout(() => {
+      if (!hasStartedPlaying) {
+        unmuteVideo();
+        window.removeEventListener('message', handleVimeoMessage);
+      }
+    }, 4000);
   };
 
   const trackVimeoProgress = () => {
@@ -483,7 +504,7 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
   };
 
   const getVimeoVideoId = (url: string): string | null => {
-    const regExp = /vimeo\.com\/(\d+)/;
+    const regExp = /vimeo\.com\/(?:video\/)?(\d+)/;
     const match = url.match(regExp);
     return match ? match[1] : null;
   };
@@ -491,7 +512,7 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
   const getVimeoEmbedUrl = (url: string): string | null => {
     const videoId = getVimeoVideoId(url);
     if (videoId) {
-      return `https://player.vimeo.com/video/${videoId}?api=1&autoplay=0&loop=1&muted=1&background=0&controls=0&title=0&byline=0&portrait=0`;
+      return `https://player.vimeo.com/video/${videoId}?api=1&autoplay=1&loop=1&muted=1&background=1&controls=0&title=0&byline=0&portrait=0&playsinline=1`;
     }
     return null;
   };
