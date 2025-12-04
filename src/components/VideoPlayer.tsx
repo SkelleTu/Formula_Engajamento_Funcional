@@ -288,6 +288,14 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
       setShowHudOverlay(false);
     }, 5000);
     
+    setTimeout(() => {
+      const iframe = document.getElementById('vimeo-player') as HTMLIFrameElement;
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage('{"method":"setVolume","value":1}', '*');
+        iframe.contentWindow.postMessage('{"method":"setMuted","value":false}', '*');
+      }
+    }, 500);
+    
     trackVimeoProgress();
   };
 
@@ -435,7 +443,7 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
   const getVimeoEmbedUrl = (url: string): string | null => {
     const videoId = getVimeoVideoId(url);
     if (videoId) {
-      return `https://player.vimeo.com/video/${videoId}?autoplay=1&loop=1&muted=0&background=0&controls=0&title=0&byline=0&portrait=0`;
+      return `https://player.vimeo.com/video/${videoId}?autoplay=1&loop=1&muted=1&background=0&controls=0&title=0&byline=0&portrait=0`;
     }
     return null;
   };
