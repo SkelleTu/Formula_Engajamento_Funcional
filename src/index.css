@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
+
+/* Esconder completamente todos os controles e HUD do YouTube */
+#youtube-player iframe {
+  pointer-events: none !important;
+}
+
+#youtube-player .ytp-chrome-top,
+#youtube-player .ytp-chrome-bottom,
+#youtube-player .ytp-gradient-top,
+#youtube-player .ytp-gradient-bottom,
+#youtube-player .ytp-title,
+#youtube-player .ytp-watermark,
+#youtube-player .ytp-show-cards-title,
+#youtube-player .ytp-pause-overlay,
+#youtube-player .ytp-player-content,
+#youtube-player .ytp-large-play-button,
+#youtube-player .ytp-cued-thumbnail-overlay {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+@layer utilities {
+  @keyframes float-fade {
+    0%, 100% {
+      transform: translateY(0px);
+      opacity: 1;
+    }
+    50% {
+      transform: translateY(-8px);
+      opacity: 0.85;
+    }
+  }
+
+  .animate-float-fade {
+    animation: float-fade 4s ease-in-out infinite;
+  }
+
+  .animate-float-fade-delayed {
+    animation: float-fade 5s ease-in-out infinite;
+    animation-delay: 1.5s;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+}

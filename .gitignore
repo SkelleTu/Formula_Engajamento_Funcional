@@ -1,0 +1,81 @@
+# ═══════════════════════════════════════════════════════
+# GITIGNORE - FÓRMULA ENGAJAMENTO
+# ═══════════════════════════════════════════════════════
+
+# ──────────────────────────────────────────────────────
+# Logs
+# ──────────────────────────────────────────────────────
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ──────────────────────────────────────────────────────
+# Dependências
+# ──────────────────────────────────────────────────────
+node_modules
+
+# ──────────────────────────────────────────────────────
+# Build / Dist
+# ──────────────────────────────────────────────────────
+dist
+dist-ssr
+*.local
+
+# ──────────────────────────────────────────────────────
+# Variáveis de Ambiente e Credenciais (IMPORTANTE!)
+# ──────────────────────────────────────────────────────
+.env
+.env.local
+.env.production.local
+.env.development.local
+.env.test.local
+
+# NUNCA commite credenciais reais
+CREDENCIAIS_ADMIN.txt
+
+# ──────────────────────────────────────────────────────
+# Banco de Dados SQLite (IMPORTANTE: NÃO ESTÁ IGNORADO!)
+# ──────────────────────────────────────────────────────
+# O arquivo database.db É VERSIONADO NO GIT propositalmente!
+# Ele contém todos os dados (clientes, analytics, configurações)
+# e será migrado junto com o código para garantir 100% de portabilidade
+# 
+# Se você quiser excluir o banco do Git (não recomendado), descomente:
+# database.db
+# database.db-shm
+# database.db-wal
+
+# ──────────────────────────────────────────────────────
+# IDEs e Editores
+# ──────────────────────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ──────────────────────────────────────────────────────
+# Arquivos Temporários
+# ──────────────────────────────────────────────────────
+/tmp
+*.tmp
+*.temp
+
+# ──────────────────────────────────────────────────────
+# Vídeos de Upload (arquivos grandes)
+# ──────────────────────────────────────────────────────
+public/videos/
+
+# ──────────────────────────────────────────────────────
+# Sistema Operacional
+# ──────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db

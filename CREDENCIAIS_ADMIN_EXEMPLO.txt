@@ -1,0 +1,43 @@
+# ═══════════════════════════════════════════════════════
+# CREDENCIAIS DO PAINEL ADMINISTRATIVO - EXEMPLO
+# ═══════════════════════════════════════════════════════
+#
+# ESTE É UM ARQUIVO DE EXEMPLO
+# As credenciais reais devem ser criadas usando o script:
+# npm run create-admin
+#
+# ═══════════════════════════════════════════════════════
+
+INSTRUÇÕES PARA CRIAR UM ADMIN:
+
+1. Certifique-se de que o servidor está rodando (npm run dev)
+2. Execute o comando: npm run create-admin
+3. Siga as instruções no terminal
+4. Guarde as credenciais em um local seguro
+
+═══════════════════════════════════════════════════════
+
+FORMATO DAS CREDENCIAIS:
+
+👤 Username: [seu_usuario]
+🔐 Senha: [sua_senha_segura]
+🔗 URL de Acesso: /admin
+
+═══════════════════════════════════════════════════════
+
+IMPORTANTE:
+- Guarde essas credenciais em um local seguro
+- Use apenas o nome de usuário para fazer login (SEM EMAIL)
+- Não compartilhe essas informações
+- NUNCA commite credenciais reais no Git
+
+O painel administrativo mostra:
+✓ Total de visitantes
+✓ Total de registros
+✓ Analytics completo
+✓ Informações de localização e dispositivos
+✓ Eventos e visualizações de página
+✓ Exportação de dados para Word
+✓ Importação de dados de Word
+
+═══════════════════════════════════════════════════════
