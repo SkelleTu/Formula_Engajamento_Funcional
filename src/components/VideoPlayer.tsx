@@ -305,23 +305,44 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
     
     setIsMuted(true);
     
-    setTimeout(() => {
-      const iframe = document.getElementById('vimeo-player') as HTMLIFrameElement;
-      if (iframe && iframe.contentWindow) {
-        iframe.contentWindow.postMessage('{"method":"setVolume","value":1}', '*');
-        iframe.contentWindow.postMessage('{"method":"setMuted","value":false}', '*');
-        setIsMuted(false);
+    const handleVimeoMessage = (event: MessageEvent) => {
+      if (event.origin !== 'https://player.vimeo.com') return;
+      
+      try {
+        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
         
-        setTimeout(() => {
-          iframe.contentWindow?.postMessage('{"method":"play"}', '*');
+        if (data.event === 'play' || data.event === 'playing') {
           setIsVideoStarted(true);
+          
+          autoUnmuteTimerRef.current = setTimeout(() => {
+            const iframe = document.getElementById('vimeo-player') as HTMLIFrameElement;
+            if (iframe && iframe.contentWindow) {
+              iframe.contentWindow.postMessage('{"method":"setVolume","value":1}', '*');
+              iframe.contentWindow.postMessage('{"method":"setMuted","value":false}', '*');
+              setIsMuted(false);
+            }
+          }, 300);
           
           hudOverlayTimeoutRef.current = setTimeout(() => {
             setShowHudOverlay(false);
           }, 5000);
           
           trackVimeoProgress();
-        }, 500);
+          
+          window.removeEventListener('message', handleVimeoMessage);
+        }
+      } catch (e) {}
+    };
+    
+    window.addEventListener('message', handleVimeoMessage);
+    
+    setTimeout(() => {
+      const iframe = document.getElementById('vimeo-player') as HTMLIFrameElement;
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage('{"method":"addEventListener","value":"play"}', '*');
+        iframe.contentWindow.postMessage('{"method":"addEventListener","value":"playing"}', '*');
+        
+        iframe.contentWindow.postMessage('{"method":"play"}', '*');
       }
     }, 1000);
   };
