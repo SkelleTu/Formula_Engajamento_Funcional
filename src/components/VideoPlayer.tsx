@@ -13,7 +13,8 @@ interface VideoConfig {
   button_delay_seconds: number;
 }
 
-const DEFAULT_VIDEO_URL = 'https://youtu.be/WAUqBZuNmlA';
+const DEFAULT_VIDEO_URL = 'https://vimeo.com/1142286537';
+const DEFAULT_VIDEO_TYPE = 'vimeo';
 const DEFAULT_BUTTON_DELAY = 180;
 
 const STORAGE_KEY = 'video_progress';
@@ -172,7 +173,7 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
         setVideoConfig({
           id: 0,
           video_url: DEFAULT_VIDEO_URL,
-          video_type: 'youtube',
+          video_type: DEFAULT_VIDEO_TYPE,
           button_delay_seconds: DEFAULT_BUTTON_DELAY
         });
       }
@@ -181,7 +182,7 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
       setVideoConfig({
         id: 0,
         video_url: DEFAULT_VIDEO_URL,
-        video_type: 'youtube',
+        video_type: DEFAULT_VIDEO_TYPE,
         button_delay_seconds: DEFAULT_BUTTON_DELAY
       });
     }
