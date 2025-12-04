@@ -306,18 +306,49 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
     setIsMuted(true);
     
     setTimeout(() => {
-      const clickOverlay = document.getElementById('vimeo-click-overlay');
-      if (clickOverlay) {
+      const iframe = document.getElementById('vimeo-player') as HTMLIFrameElement;
+      if (iframe) {
+        const rect = iframe.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        
         const clickEvent = new MouseEvent('click', {
           view: window,
           bubbles: true,
           cancelable: true,
-          clientX: clickOverlay.getBoundingClientRect().left + 100,
-          clientY: clickOverlay.getBoundingClientRect().top + 100
+          clientX: centerX,
+          clientY: centerY,
+          screenX: centerX,
+          screenY: centerY,
+          button: 0,
+          buttons: 1
         });
-        clickOverlay.dispatchEvent(clickEvent);
+        
+        iframe.dispatchEvent(clickEvent);
+        
+        iframe.focus();
+        
+        if (iframe.contentWindow) {
+          iframe.contentWindow.postMessage('{"method":"play"}', '*');
+          
+          setTimeout(() => {
+            if (iframe.contentWindow) {
+              iframe.contentWindow.postMessage('{"method":"setVolume","value":1}', '*');
+              iframe.contentWindow.postMessage('{"method":"setMuted","value":false}', '*');
+              setIsMuted(false);
+            }
+          }, 300);
+        }
+        
+        setIsVideoStarted(true);
+        
+        hudOverlayTimeoutRef.current = setTimeout(() => {
+          setShowHudOverlay(false);
+        }, 5000);
+        
+        trackVimeoProgress();
       }
-    }, 500);
+    }, 1000);
   };
   
   const handleVimeoOverlayClick = () => {
@@ -736,12 +767,6 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
           )}
           {videoConfig.video_type === 'vimeo' && (
             <>
-              <div 
-                id="vimeo-click-overlay"
-                className="absolute inset-0 z-30 cursor-pointer"
-                onClick={handleVimeoOverlayClick}
-                style={{ background: 'transparent' }}
-              ></div>
               <button
                 ref={muteButtonRef}
                 onClick={toggleVimeoMute}
