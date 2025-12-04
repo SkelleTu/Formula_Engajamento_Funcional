@@ -304,17 +304,11 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
     if (!videoConfig) return;
     
     setIsVideoStarted(true);
-    setIsMuted(true);
+    setIsMuted(false);
     
     hudOverlayTimeoutRef.current = setTimeout(() => {
       setShowHudOverlay(false);
     }, 5000);
-    
-    autoUnmuteTimerRef.current = setTimeout(() => {
-      if (muteButtonRef.current) {
-        muteButtonRef.current.click();
-      }
-    }, 4000);
     
     trackVimeoProgress();
   };
@@ -463,7 +457,7 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
   const getVimeoEmbedUrl = (url: string): string | null => {
     const videoId = getVimeoVideoId(url);
     if (videoId) {
-      return `https://player.vimeo.com/video/${videoId}?autoplay=1&loop=1&muted=1&background=0&controls=0&title=0&byline=0&portrait=0`;
+      return `https://player.vimeo.com/video/${videoId}?autoplay=1&loop=1&muted=0&background=0&controls=0&title=0&byline=0&portrait=0`;
     }
     return null;
   };
