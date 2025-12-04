@@ -279,6 +279,14 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
     trackGoogleDriveProgress();
   };
 
+  const unmuteVimeo = () => {
+    const iframe = document.getElementById('vimeo-player') as HTMLIFrameElement;
+    if (iframe && iframe.contentWindow) {
+      iframe.contentWindow.postMessage('{"method":"setVolume","value":1}', '*');
+      iframe.contentWindow.postMessage('{"method":"setMuted","value":false}', '*');
+    }
+  };
+
   const setupVimeoVideo = () => {
     if (!videoConfig) return;
     
@@ -288,13 +296,22 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
       setShowHudOverlay(false);
     }, 5000);
     
+    const handleVimeoUnmute = () => {
+      unmuteVimeo();
+      document.removeEventListener('click', handleVimeoUnmute, true);
+      document.removeEventListener('touchstart', handleVimeoUnmute, true);
+      document.removeEventListener('scroll', handleVimeoUnmute, true);
+      document.removeEventListener('keydown', handleVimeoUnmute, true);
+    };
+    
+    document.addEventListener('click', handleVimeoUnmute, true);
+    document.addEventListener('touchstart', handleVimeoUnmute, true);
+    document.addEventListener('scroll', handleVimeoUnmute, true);
+    document.addEventListener('keydown', handleVimeoUnmute, true);
+    
     setTimeout(() => {
-      const iframe = document.getElementById('vimeo-player') as HTMLIFrameElement;
-      if (iframe && iframe.contentWindow) {
-        iframe.contentWindow.postMessage('{"method":"setVolume","value":1}', '*');
-        iframe.contentWindow.postMessage('{"method":"setMuted","value":false}', '*');
-      }
-    }, 500);
+      unmuteVimeo();
+    }, 100);
     
     trackVimeoProgress();
   };
