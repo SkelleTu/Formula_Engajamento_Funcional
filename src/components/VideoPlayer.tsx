@@ -24,6 +24,7 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
   const [buttonEnabled, setButtonEnabled] = useState(false);
   const [showHudOverlay, setShowHudOverlay] = useState(true);
   const [isVideoStarted, setIsVideoStarted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
   const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -34,6 +35,8 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
   const currentVideoIdRef = useRef<string>('');
   const hasTriedAutoplayRef = useRef<boolean>(false);
   const documentClickListenerRef = useRef<any>(null);
+  const muteButtonRef = useRef<HTMLButtonElement>(null);
+  const autoUnmuteTimerRef = useRef<any>(null);
 
   const getSavedProgress = (videoId: string): number => {
     try {
@@ -106,6 +109,9 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
       }
       if (saveProgressIntervalRef.current) {
         clearInterval(saveProgressIntervalRef.current);
+      }
+      if (autoUnmuteTimerRef.current) {
+        clearTimeout(autoUnmuteTimerRef.current);
       }
       if (documentClickListenerRef.current) {
         document.removeEventListener('click', documentClickListenerRef.current, true);
@@ -279,11 +285,18 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
     trackGoogleDriveProgress();
   };
 
-  const unmuteVimeo = () => {
+  const toggleVimeoMute = () => {
     const iframe = document.getElementById('vimeo-player') as HTMLIFrameElement;
     if (iframe && iframe.contentWindow) {
-      iframe.contentWindow.postMessage('{"method":"setVolume","value":1}', '*');
-      iframe.contentWindow.postMessage('{"method":"setMuted","value":false}', '*');
+      if (isMuted) {
+        iframe.contentWindow.postMessage('{"method":"setVolume","value":1}', '*');
+        iframe.contentWindow.postMessage('{"method":"setMuted","value":false}', '*');
+        setIsMuted(false);
+      } else {
+        iframe.contentWindow.postMessage('{"method":"setVolume","value":0}', '*');
+        iframe.contentWindow.postMessage('{"method":"setMuted","value":true}', '*');
+        setIsMuted(true);
+      }
     }
   };
 
@@ -291,27 +304,17 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
     if (!videoConfig) return;
     
     setIsVideoStarted(true);
+    setIsMuted(true);
     
     hudOverlayTimeoutRef.current = setTimeout(() => {
       setShowHudOverlay(false);
     }, 5000);
     
-    const handleVimeoUnmute = () => {
-      unmuteVimeo();
-      document.removeEventListener('click', handleVimeoUnmute, true);
-      document.removeEventListener('touchstart', handleVimeoUnmute, true);
-      document.removeEventListener('scroll', handleVimeoUnmute, true);
-      document.removeEventListener('keydown', handleVimeoUnmute, true);
-    };
-    
-    document.addEventListener('click', handleVimeoUnmute, true);
-    document.addEventListener('touchstart', handleVimeoUnmute, true);
-    document.addEventListener('scroll', handleVimeoUnmute, true);
-    document.addEventListener('keydown', handleVimeoUnmute, true);
-    
-    setTimeout(() => {
-      unmuteVimeo();
-    }, 100);
+    autoUnmuteTimerRef.current = setTimeout(() => {
+      if (muteButtonRef.current) {
+        muteButtonRef.current.click();
+      }
+    }, 4000);
     
     trackVimeoProgress();
   };
@@ -714,9 +717,31 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
             ></div>
           )}
           {videoConfig.video_type === 'vimeo' && (
-            <div 
-              className="absolute inset-0 z-30 cursor-default pointer-events-none"
-            ></div>
+            <>
+              <div 
+                className="absolute inset-0 z-30 cursor-default pointer-events-none"
+              ></div>
+              <button
+                ref={muteButtonRef}
+                onClick={toggleVimeoMute}
+                className="absolute bottom-4 right-4 z-50 w-10 h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center transition-all duration-200 border border-white/20"
+                style={{ pointerEvents: 'auto' }}
+                title={isMuted ? 'Ativar som' : 'Desativar som'}
+              >
+                {isMuted ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <line x1="23" y1="9" x2="17" y2="15"></line>
+                    <line x1="17" y1="9" x2="23" y2="15"></line>
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                  </svg>
+                )}
+              </button>
+            </>
           )}
           
           <div 
