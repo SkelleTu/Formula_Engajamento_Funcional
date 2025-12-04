@@ -300,45 +300,36 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
     }
   };
 
+  const unmuteVimeoOnInteraction = () => {
+    const iframe = document.getElementById('vimeo-player') as HTMLIFrameElement;
+    if (iframe && iframe.contentWindow) {
+      iframe.contentWindow.postMessage('{"method":"setVolume","value":1}', '*');
+      iframe.contentWindow.postMessage('{"method":"setMuted","value":false}', '*');
+      setIsMuted(false);
+    }
+    
+    document.removeEventListener('click', unmuteVimeoOnInteraction, true);
+    document.removeEventListener('scroll', unmuteVimeoOnInteraction, true);
+    document.removeEventListener('mousemove', unmuteVimeoOnInteraction, true);
+    document.removeEventListener('touchstart', unmuteVimeoOnInteraction, true);
+    document.removeEventListener('keydown', unmuteVimeoOnInteraction, true);
+  };
+  
   const setupVimeoVideo = () => {
     if (!videoConfig) return;
     
     setIsMuted(true);
     
+    document.addEventListener('click', unmuteVimeoOnInteraction, true);
+    document.addEventListener('scroll', unmuteVimeoOnInteraction, true);
+    document.addEventListener('mousemove', unmuteVimeoOnInteraction, true);
+    document.addEventListener('touchstart', unmuteVimeoOnInteraction, true);
+    document.addEventListener('keydown', unmuteVimeoOnInteraction, true);
+    
     setTimeout(() => {
       const iframe = document.getElementById('vimeo-player') as HTMLIFrameElement;
-      if (iframe) {
-        const rect = iframe.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        
-        const clickEvent = new MouseEvent('click', {
-          view: window,
-          bubbles: true,
-          cancelable: true,
-          clientX: centerX,
-          clientY: centerY,
-          screenX: centerX,
-          screenY: centerY,
-          button: 0,
-          buttons: 1
-        });
-        
-        iframe.dispatchEvent(clickEvent);
-        
-        iframe.focus();
-        
-        if (iframe.contentWindow) {
-          iframe.contentWindow.postMessage('{"method":"play"}', '*');
-          
-          setTimeout(() => {
-            if (iframe.contentWindow) {
-              iframe.contentWindow.postMessage('{"method":"setVolume","value":1}', '*');
-              iframe.contentWindow.postMessage('{"method":"setMuted","value":false}', '*');
-              setIsMuted(false);
-            }
-          }, 300);
-        }
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage('{"method":"play"}', '*');
         
         setIsVideoStarted(true);
         
@@ -349,23 +340,6 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
         trackVimeoProgress();
       }
     }, 1000);
-  };
-  
-  const handleVimeoOverlayClick = () => {
-    const iframe = document.getElementById('vimeo-player') as HTMLIFrameElement;
-    if (iframe && iframe.contentWindow) {
-      iframe.contentWindow.postMessage('{"method":"setVolume","value":1}', '*');
-      iframe.contentWindow.postMessage('{"method":"setMuted","value":false}', '*');
-      iframe.contentWindow.postMessage('{"method":"play"}', '*');
-      setIsMuted(false);
-      setIsVideoStarted(true);
-      
-      hudOverlayTimeoutRef.current = setTimeout(() => {
-        setShowHudOverlay(false);
-      }, 5000);
-      
-      trackVimeoProgress();
-    }
   };
 
   const trackVimeoProgress = () => {
