@@ -306,26 +306,35 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
     setIsMuted(true);
     
     setTimeout(() => {
-      const iframe = document.getElementById('vimeo-player') as HTMLIFrameElement;
-      if (iframe && iframe.contentWindow) {
-        iframe.contentWindow.postMessage('{"method":"play"}', '*');
-        setIsVideoStarted(true);
-        
-        autoUnmuteTimerRef.current = setTimeout(() => {
-          if (iframe.contentWindow) {
-            iframe.contentWindow.postMessage('{"method":"setVolume","value":1}', '*');
-            iframe.contentWindow.postMessage('{"method":"setMuted","value":false}', '*');
-            setIsMuted(false);
-          }
-        }, 500);
-        
-        hudOverlayTimeoutRef.current = setTimeout(() => {
-          setShowHudOverlay(false);
-        }, 5000);
-        
-        trackVimeoProgress();
+      const clickOverlay = document.getElementById('vimeo-click-overlay');
+      if (clickOverlay) {
+        const clickEvent = new MouseEvent('click', {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+          clientX: clickOverlay.getBoundingClientRect().left + 100,
+          clientY: clickOverlay.getBoundingClientRect().top + 100
+        });
+        clickOverlay.dispatchEvent(clickEvent);
       }
-    }, 1000);
+    }, 500);
+  };
+  
+  const handleVimeoOverlayClick = () => {
+    const iframe = document.getElementById('vimeo-player') as HTMLIFrameElement;
+    if (iframe && iframe.contentWindow) {
+      iframe.contentWindow.postMessage('{"method":"setVolume","value":1}', '*');
+      iframe.contentWindow.postMessage('{"method":"setMuted","value":false}', '*');
+      iframe.contentWindow.postMessage('{"method":"play"}', '*');
+      setIsMuted(false);
+      setIsVideoStarted(true);
+      
+      hudOverlayTimeoutRef.current = setTimeout(() => {
+        setShowHudOverlay(false);
+      }, 5000);
+      
+      trackVimeoProgress();
+    }
   };
 
   const trackVimeoProgress = () => {
@@ -728,7 +737,10 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
           {videoConfig.video_type === 'vimeo' && (
             <>
               <div 
-                className="absolute inset-0 z-30 cursor-default pointer-events-none"
+                id="vimeo-click-overlay"
+                className="absolute inset-0 z-30 cursor-pointer"
+                onClick={handleVimeoOverlayClick}
+                style={{ background: 'transparent' }}
               ></div>
               <button
                 ref={muteButtonRef}
