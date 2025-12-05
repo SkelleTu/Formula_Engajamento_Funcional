@@ -38,6 +38,7 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
   const muteButtonRef = useRef<HTMLButtonElement>(null);
   const autoUnmuteTimerRef = useRef<any>(null);
   const soundEnabledRef = useRef<boolean>(false);
+  const videoConfigRef = useRef<VideoConfig | null>(null);
 
   const getSavedProgress = (videoId: string): number => {
     try {
@@ -66,20 +67,25 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
     if (soundEnabledRef.current) return;
     soundEnabledRef.current = true;
     
-    if (videoConfig?.video_type === 'vimeo') {
+    const config = videoConfigRef.current;
+    
+    if (config?.video_type === 'vimeo') {
       const iframe = document.getElementById('vimeo-player') as HTMLIFrameElement;
       if (iframe && iframe.contentWindow) {
         iframe.contentWindow.postMessage('{"method":"setVolume","value":1}', '*');
         iframe.contentWindow.postMessage('{"method":"setMuted","value":false}', '*');
         setIsMuted(false);
+        sessionStorage.setItem('video_sound_authorized', 'true');
       }
-    } else if (videoConfig?.video_type === 'local' && localVideoRef.current) {
+    } else if (config?.video_type === 'local' && localVideoRef.current) {
       localVideoRef.current.muted = false;
       setIsMuted(false);
+      sessionStorage.setItem('video_sound_authorized', 'true');
     } else if (playerRef.current) {
       if (playerRef.current.unMute) playerRef.current.unMute();
       if (playerRef.current.setVolume) playerRef.current.setVolume(100);
       setIsMuted(false);
+      sessionStorage.setItem('video_sound_authorized', 'true');
     }
     
     document.removeEventListener('click', enableSoundOnInteraction, true);
@@ -180,6 +186,8 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
 
   useEffect(() => {
     if (videoConfig) {
+      videoConfigRef.current = videoConfig;
+      
       if (videoConfig.video_type === 'local') {
         currentVideoIdRef.current = videoConfig.video_path || videoConfig.video_url;
         setupLocalVideo();
@@ -367,6 +375,17 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
     }
   };
 
+  const tryEnableVimeoSound = () => {
+    const iframe = document.getElementById('vimeo-player') as HTMLIFrameElement;
+    if (iframe && iframe.contentWindow) {
+      iframe.contentWindow.postMessage('{"method":"setVolume","value":1}', '*');
+      iframe.contentWindow.postMessage('{"method":"setMuted","value":false}', '*');
+      setIsMuted(false);
+      soundEnabledRef.current = true;
+      sessionStorage.setItem('video_sound_authorized', 'true');
+    }
+  };
+
   const setupVimeoVideo = () => {
     if (!videoConfig) return;
     
@@ -378,10 +397,7 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
         iframe.contentWindow.postMessage('{"method":"play"}', '*');
         
         if (wasAuthorized || soundEnabledRef.current) {
-          iframe.contentWindow.postMessage('{"method":"setVolume","value":1}', '*');
-          iframe.contentWindow.postMessage('{"method":"setMuted","value":false}', '*');
-          setIsMuted(false);
-          soundEnabledRef.current = true;
+          tryEnableVimeoSound();
         }
         
         setIsVideoStarted(true);
@@ -393,6 +409,18 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
         trackVimeoProgress();
       }
     }, 500);
+    
+    setTimeout(() => {
+      if (!soundEnabledRef.current) {
+        tryEnableVimeoSound();
+      }
+    }, 2000);
+    
+    setTimeout(() => {
+      if (!soundEnabledRef.current) {
+        tryEnableVimeoSound();
+      }
+    }, 4000);
   };
 
   const trackVimeoProgress = () => {
@@ -798,6 +826,17 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
           )}
           {videoConfig.video_type === 'vimeo' && (
             <>
+              {isMuted && (
+                <div 
+                  className="absolute inset-0 z-40 cursor-pointer"
+                  onClick={() => {
+                    tryEnableVimeoSound();
+                  }}
+                  onTouchStart={() => {
+                    tryEnableVimeoSound();
+                  }}
+                />
+              )}
               <button
                 ref={muteButtonRef}
                 onClick={toggleVimeoMute}
