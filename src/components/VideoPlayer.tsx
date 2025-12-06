@@ -24,7 +24,8 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
   const [buttonEnabled, setButtonEnabled] = useState(false);
   const [showHudOverlay, setShowHudOverlay] = useState(true);
   const [isVideoStarted, setIsVideoStarted] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
+  const [volume, setVolume] = useState(100);
+  const [showPlayButton, setShowPlayButton] = useState(true);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
   const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -35,7 +36,6 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
   const currentVideoIdRef = useRef<string>('');
   const hasTriedAutoplayRef = useRef<boolean>(false);
   const documentClickListenerRef = useRef<any>(null);
-  const muteButtonRef = useRef<HTMLButtonElement>(null);
   const autoUnmuteTimerRef = useRef<any>(null);
   const soundEnabledRef = useRef<boolean>(false);
   const videoConfigRef = useRef<VideoConfig | null>(null);
@@ -63,55 +63,6 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
     } catch (e) {}
   };
 
-  const enableSoundOnInteraction = () => {
-    if (soundEnabledRef.current) return;
-    soundEnabledRef.current = true;
-    
-    const config = videoConfigRef.current;
-    
-    if (config?.video_type === 'vimeo') {
-      const iframe = document.getElementById('vimeo-player') as HTMLIFrameElement;
-      if (iframe && iframe.contentWindow) {
-        iframe.contentWindow.postMessage('{"method":"setVolume","value":1}', '*');
-        iframe.contentWindow.postMessage('{"method":"setMuted","value":false}', '*');
-        setIsMuted(false);
-        sessionStorage.setItem('video_sound_authorized', 'true');
-      }
-    } else if (config?.video_type === 'local' && localVideoRef.current) {
-      localVideoRef.current.muted = false;
-      setIsMuted(false);
-      sessionStorage.setItem('video_sound_authorized', 'true');
-    } else if (playerRef.current) {
-      if (playerRef.current.unMute) playerRef.current.unMute();
-      if (playerRef.current.setVolume) playerRef.current.setVolume(100);
-      setIsMuted(false);
-      sessionStorage.setItem('video_sound_authorized', 'true');
-    }
-    
-    document.removeEventListener('click', enableSoundOnInteraction, true);
-    document.removeEventListener('touchstart', enableSoundOnInteraction, true);
-    document.removeEventListener('scroll', enableSoundOnInteraction, true);
-    document.removeEventListener('wheel', enableSoundOnInteraction, true);
-    document.removeEventListener('keydown', enableSoundOnInteraction, true);
-    document.removeEventListener('mousemove', enableSoundOnInteraction, true);
-    document.removeEventListener('touchmove', enableSoundOnInteraction, true);
-  };
-
-  const setupAutoUnmute = () => {
-    const wasAuthorized = sessionStorage.getItem('video_sound_authorized') === 'true';
-    if (wasAuthorized) {
-      soundEnabledRef.current = true;
-      return;
-    }
-    
-    document.addEventListener('click', enableSoundOnInteraction, true);
-    document.addEventListener('touchstart', enableSoundOnInteraction, true);
-    document.addEventListener('scroll', enableSoundOnInteraction, true);
-    document.addEventListener('wheel', enableSoundOnInteraction, true);
-    document.addEventListener('keydown', enableSoundOnInteraction, true);
-    document.addEventListener('mousemove', enableSoundOnInteraction, true);
-    document.addEventListener('touchmove', enableSoundOnInteraction, true);
-  };
 
   const triggerPlay = () => {
     if (videoConfig?.video_type === 'local' && localVideoRef.current) {
@@ -156,7 +107,6 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
 
   useEffect(() => {
     loadVideoConfig();
-    setupAutoUnmute();
     
     return () => {
       if (hudOverlayTimeoutRef.current) {
@@ -174,13 +124,6 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
         document.removeEventListener('keydown', documentClickListenerRef.current, true);
         document.removeEventListener('scroll', documentClickListenerRef.current, true);
       }
-      document.removeEventListener('click', enableSoundOnInteraction, true);
-      document.removeEventListener('touchstart', enableSoundOnInteraction, true);
-      document.removeEventListener('scroll', enableSoundOnInteraction, true);
-      document.removeEventListener('wheel', enableSoundOnInteraction, true);
-      document.removeEventListener('keydown', enableSoundOnInteraction, true);
-      document.removeEventListener('mousemove', enableSoundOnInteraction, true);
-      document.removeEventListener('touchmove', enableSoundOnInteraction, true);
     };
   }, []);
 
@@ -275,7 +218,6 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
       
       if (soundEnabledRef.current) {
         video.muted = false;
-        setIsMuted(false);
       }
       
       hudOverlayTimeoutRef.current = setTimeout(() => {
@@ -358,69 +300,48 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
     trackGoogleDriveProgress();
   };
 
-  const toggleVimeoMute = () => {
+  const setVimeoVolume = (newVolume: number) => {
     const iframe = document.getElementById('vimeo-player') as HTMLIFrameElement;
     if (iframe && iframe.contentWindow) {
-      if (isMuted) {
-        iframe.contentWindow.postMessage('{"method":"setVolume","value":1}', '*');
-        iframe.contentWindow.postMessage('{"method":"setMuted","value":false}', '*');
-        setIsMuted(false);
-        soundEnabledRef.current = true;
-        sessionStorage.setItem('video_sound_authorized', 'true');
-      } else {
-        iframe.contentWindow.postMessage('{"method":"setVolume","value":0}', '*');
-        iframe.contentWindow.postMessage('{"method":"setMuted","value":true}', '*');
-        setIsMuted(true);
-      }
+      const volumeValue = newVolume / 100;
+      iframe.contentWindow.postMessage(`{"method":"setVolume","value":${volumeValue}}`, '*');
+      setVolume(newVolume);
     }
   };
 
-  const tryEnableVimeoSound = () => {
+  const increaseVolume = () => {
+    const newVolume = Math.min(100, volume + 20);
+    setVimeoVolume(newVolume);
+  };
+
+  const decreaseVolume = () => {
+    const newVolume = Math.max(0, volume - 20);
+    setVimeoVolume(newVolume);
+  };
+
+  const startVimeoManually = () => {
     const iframe = document.getElementById('vimeo-player') as HTMLIFrameElement;
     if (iframe && iframe.contentWindow) {
+      iframe.contentWindow.postMessage('{"method":"play"}', '*');
       iframe.contentWindow.postMessage('{"method":"setVolume","value":1}', '*');
       iframe.contentWindow.postMessage('{"method":"setMuted","value":false}', '*');
-      setIsMuted(false);
+      setVolume(100);
+      setShowPlayButton(false);
+      setIsVideoStarted(true);
       soundEnabledRef.current = true;
       sessionStorage.setItem('video_sound_authorized', 'true');
+      
+      hudOverlayTimeoutRef.current = setTimeout(() => {
+        setShowHudOverlay(false);
+      }, 5000);
+      
+      trackVimeoProgress();
     }
   };
 
   const setupVimeoVideo = () => {
     if (!videoConfig) return;
-    
-    const wasAuthorized = sessionStorage.getItem('video_sound_authorized') === 'true';
-    
-    setTimeout(() => {
-      const iframe = document.getElementById('vimeo-player') as HTMLIFrameElement;
-      if (iframe && iframe.contentWindow) {
-        iframe.contentWindow.postMessage('{"method":"play"}', '*');
-        
-        if (wasAuthorized || soundEnabledRef.current) {
-          tryEnableVimeoSound();
-        }
-        
-        setIsVideoStarted(true);
-        
-        hudOverlayTimeoutRef.current = setTimeout(() => {
-          setShowHudOverlay(false);
-        }, 5000);
-        
-        trackVimeoProgress();
-      }
-    }, 500);
-    
-    setTimeout(() => {
-      if (!soundEnabledRef.current) {
-        tryEnableVimeoSound();
-      }
-    }, 2000);
-    
-    setTimeout(() => {
-      if (!soundEnabledRef.current) {
-        tryEnableVimeoSound();
-      }
-    }, 4000);
+    setShowPlayButton(true);
   };
 
   const trackVimeoProgress = () => {
@@ -568,7 +489,7 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
   const getVimeoEmbedUrl = (url: string): string | null => {
     const videoId = getVimeoVideoId(url);
     if (videoId) {
-      return `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=1&loop=1&autopause=0&controls=0&title=0&byline=0&portrait=0&playsinline=1&api=1`;
+      return `https://player.vimeo.com/video/${videoId}?autoplay=0&muted=0&loop=1&autopause=0&controls=0&title=0&byline=0&portrait=0&playsinline=1&api=1`;
     }
     return null;
   };
@@ -639,7 +560,6 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
               } else if (soundEnabledRef.current) {
                 if (player.unMute) player.unMute();
                 if (player.setVolume) player.setVolume(100);
-                setIsMuted(false);
               }
             }
           }, 1000);
@@ -662,7 +582,6 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
                 if (playerRef.current) {
                   if (playerRef.current.unMute) playerRef.current.unMute();
                   if (playerRef.current.setVolume) playerRef.current.setVolume(100);
-                  setIsMuted(false);
                 }
               }, 300);
             }
@@ -826,52 +745,63 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
           )}
           {videoConfig.video_type === 'vimeo' && (
             <>
-              {isMuted && (
+              {showPlayButton && (
                 <div 
                   className="absolute inset-0 z-40 cursor-pointer flex items-center justify-center"
-                  onClick={() => {
-                    tryEnableVimeoSound();
-                  }}
-                  onTouchStart={() => {
-                    tryEnableVimeoSound();
-                  }}
+                  onClick={startVimeoManually}
+                  onTouchStart={startVimeoManually}
                   style={{
-                    background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.4) 0%, transparent 70%)'
+                    background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.2) 70%)'
                   }}
                 >
                   <div 
-                    className="flex flex-col items-center gap-3 p-6 rounded-2xl backdrop-blur-sm animate-pulse"
+                    className="flex flex-col items-center gap-4 p-8 rounded-2xl backdrop-blur-sm"
                     style={{
-                      background: 'linear-gradient(135deg, rgba(168,85,247,0.3) 0%, rgba(236,72,153,0.3) 100%)',
+                      background: 'linear-gradient(135deg, rgba(168,85,247,0.4) 0%, rgba(236,72,153,0.4) 100%)',
                       border: '2px solid rgba(255,255,255,0.3)',
-                      boxShadow: '0 0 40px rgba(168,85,247,0.4), 0 0 80px rgba(236,72,153,0.2)'
+                      boxShadow: '0 0 40px rgba(168,85,247,0.5), 0 0 80px rgba(236,72,153,0.3)'
                     }}
                   >
-                    <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-all">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="white" stroke="white" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
                       </svg>
                     </div>
-                    <span className="text-white text-lg font-semibold tracking-wide">
-                      Toque para ativar o som
+                    <span className="text-white text-xl font-semibold tracking-wide">
+                      Clique para assistir
                     </span>
                   </div>
                 </div>
               )}
-              {!isMuted && (
-                <button
-                  ref={muteButtonRef}
-                  onClick={toggleVimeoMute}
-                  className="absolute bottom-4 right-4 z-50 w-10 h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center transition-all duration-200 border border-white/20"
-                  style={{ pointerEvents: 'auto' }}
-                  title="Desativar som"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                  </svg>
-                </button>
+              {!showPlayButton && (
+                <div className="absolute bottom-4 right-4 z-50 flex items-center gap-2">
+                  <button
+                    onClick={decreaseVolume}
+                    className="w-10 h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center transition-all duration-200 border border-white/20"
+                    style={{ pointerEvents: 'auto' }}
+                    title="Diminuir volume"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                      <line x1="23" y1="12" x2="17" y2="12"></line>
+                    </svg>
+                  </button>
+                  <div className="px-3 py-1 bg-black/60 rounded-full text-white text-sm font-medium border border-white/20">
+                    {volume}%
+                  </div>
+                  <button
+                    onClick={increaseVolume}
+                    className="w-10 h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center transition-all duration-200 border border-white/20"
+                    style={{ pointerEvents: 'auto' }}
+                    title="Aumentar volume"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                      <line x1="20" y1="12" x2="14" y2="12"></line>
+                      <line x1="17" y1="9" x2="17" y2="15"></line>
+                    </svg>
+                  </button>
+                </div>
               )}
             </>
           )}
