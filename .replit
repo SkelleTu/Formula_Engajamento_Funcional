@@ -31,7 +31,7 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev"
+args = "npm run frontend"
 waitForPort = 5000
 
 [[ports]]
@@ -41,10 +41,6 @@ externalPort = 3001
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 35557
-externalPort = 8099
 
 [[ports]]
 localPort = 35755
@@ -87,6 +83,10 @@ localPort = 42629
 externalPort = 3002
 
 [[ports]]
+localPort = 44375
+externalPort = 8099
+
+[[ports]]
 localPort = 45009
 externalPort = 4200
 
@@ -97,3 +97,9 @@ externalPort = 3003
 [[ports]]
 localPort = 46787
 externalPort = 3000
+
+[userenv]
+
+[userenv.shared]
+VITE_SUPABASE_URL = "https://ygeenvwtqhvutmngzwbk.supabase.co"
+VITE_SUPABASE_ANON_KEY = "sb_publishable_xsEsLwOCEyC7YEpztyFrNA_nxdTxZin"

@@ -2,9 +2,7 @@ import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FloatingIcons from '../components/FloatingIcons';
 import BackButton from '../components/BackButton';
-import { apiUrl } from '../config/api';
-import { useError } from '../contexts/ErrorContext';
-import { ErrorHandler } from '../utils/errorHandler';
+import { adminService } from '../services/supabaseAdmin';
 
 export default function AdminLoginPage() {
   const [username, setUsername] = useState('');
@@ -16,71 +14,31 @@ export default function AdminLoginPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [changePasswordError, setChangePasswordError] = useState('');
   const navigate = useNavigate();
-  const { showError } = useError();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    console.log('%c🚀 INICIANDO LOGIN', 'background: #4f46e5; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold');
-
-    const requestUrl = apiUrl('/api/admin/login');
-    const requestBody = { username, password };
-
     try {
-      const response = await ErrorHandler.enhancedFetch(
-        requestUrl,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          body: JSON.stringify(requestBody)
-        },
-        'AdminLoginPage.handleSubmit'
-      );
+      const result = await adminService.login(username, password);
 
-      const data = await response.json();
+      if (!result.success) {
+        setError(result.error || 'Erro ao fazer login');
+        setLoading(false);
+        return;
+      }
 
-      // Verificar se precisa trocar senha
-      if (data.requiresPasswordChange) {
-        console.log('%c⚠️ REQUER TROCA DE SENHA', 'background: #f59e0b; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold');
+      if (result.requiresPasswordChange) {
         setShowPasswordChange(true);
         setLoading(false);
         return;
       }
 
-      // Login bem-sucedido
-      console.log('%c✅ LOGIN BEM-SUCEDIDO', 'background: #16a34a; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold');
-      console.log('Redirecionando para dashboard...');
       navigate('/admin/dashboard');
     } catch (err: any) {
-      console.log('%c💥 ERRO CRÍTICO NO LOGIN', 'background: #991b1b; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold');
-      console.error('Detalhes completos do erro:', err);
-      
-      // SEMPRE resetar loading primeiro
       setLoading(false);
-      
-      // Mostrar erro detalhado no toast
-      if (err.errorDetails) {
-        showError(err.errorDetails);
-        setError('Erro ao fazer login. Veja os detalhes no balão de erro.');
-      } else {
-        // Fallback para erros não capturados
-        const errorDetails = ErrorHandler.createErrorDetails(
-          err.message || 'Erro desconhecido ao fazer login',
-          'AdminLoginPage.handleSubmit - Catch Block',
-          {
-            url: requestUrl,
-            method: 'POST',
-            requestBody,
-          }
-        );
-        showError(errorDetails);
-        setError('Erro ao fazer login. Veja os detalhes no balão de erro.');
-      }
+      setError(err.message || 'Erro ao fazer login');
     }
   };
 
@@ -100,52 +58,19 @@ export default function AdminLoginPage() {
 
     setLoading(true);
 
-    const requestUrl = apiUrl('/api/admin/change-password');
-    const requestBody = {
-      currentPassword: password,
-      newPassword: newPassword
-    };
-
     try {
-      await ErrorHandler.enhancedFetch(
-        requestUrl,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          body: JSON.stringify(requestBody)
-        },
-        'AdminLoginPage.handlePasswordChange'
-      );
+      const result = await adminService.changePassword(password, newPassword);
 
-      // Senha trocada com sucesso - navegar para dashboard
-      console.log('%c✅ SENHA ALTERADA COM SUCESSO', 'background: #16a34a; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold');
+      if (!result.success) {
+        setChangePasswordError(result.error || 'Erro ao trocar senha');
+        setLoading(false);
+        return;
+      }
+
       navigate('/admin/dashboard');
     } catch (err: any) {
-      console.log('%c💥 ERRO AO TROCAR SENHA', 'background: #991b1b; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold');
-      console.error('Detalhes completos do erro:', err);
-      
-      // SEMPRE resetar loading primeiro
       setLoading(false);
-      
-      // Mostrar erro detalhado no toast
-      if (err.errorDetails) {
-        showError(err.errorDetails);
-        setChangePasswordError('Erro ao trocar senha. Veja os detalhes no balão de erro.');
-      } else {
-        const errorDetails = ErrorHandler.createErrorDetails(
-          err.message || 'Erro desconhecido ao trocar senha',
-          'AdminLoginPage.handlePasswordChange - Catch Block',
-          {
-            url: requestUrl,
-            method: 'POST',
-          }
-        );
-        showError(errorDetails);
-        setChangePasswordError('Erro ao trocar senha. Veja os detalhes no balão de erro.');
-      }
+      setChangePasswordError(err.message || 'Erro ao trocar senha');
     }
   };
 

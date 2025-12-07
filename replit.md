@@ -1,7 +1,26 @@
 # Funil - Landing Page and Registration System
 
 ## Overview
-Funil is a video-based landing page application designed to capture leads through a multi-step funnel process. It features a video presentation that tracks user engagement, a registration form for user information, and an administrative dashboard for monitoring visitor analytics and managing registrations. The system aims to provide a robust platform for lead generation and analytics, built with a React frontend, Express.js backend, and SQLite database (arquivo local database.db versionado no Git para 100% de portabilidade).
+Funil is a video-based landing page application designed to capture leads through a multi-step funnel process. It features a video presentation that tracks user engagement, a registration form for user information, and an administrative dashboard for monitoring visitor analytics and managing registrations. The system aims to provide a robust platform for lead generation and analytics, built with a React frontend and **Supabase** as the database backend (100% frontend-only, compatível com Vercel).
+
+## IMPORTANTE: Migração para Supabase (Dezembro 2025)
+
+### O que mudou
+O projeto foi migrado para usar **Supabase** como banco de dados, eliminando a necessidade de um backend Express. Agora todo o projeto roda 100% no frontend e funciona perfeitamente com a Vercel.
+
+### Passos necessários para configurar
+1. **Criar as tabelas no Supabase**: Execute o script `supabase-schema.sql` no SQL Editor do Supabase
+2. **Criar um usuário admin**: Execute `node scripts/create-admin-supabase.js`
+
+### Variáveis de ambiente necessárias
+- `VITE_SUPABASE_URL` - URL do seu projeto Supabase
+- `VITE_SUPABASE_ANON_KEY` - Chave anônima do Supabase
+
+### Arquivos principais da migração
+- `src/lib/supabase.ts` - Cliente Supabase
+- `src/services/supabaseAdmin.ts` - Serviço de autenticação e admin
+- `src/services/supabaseAnalytics.ts` - Serviço de analytics
+- `supabase-schema.sql` - Schema do banco de dados para Supabase
 
 ## Recent Changes (December 2025)
 

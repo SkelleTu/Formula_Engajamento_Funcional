@@ -8,7 +8,7 @@ import EChartBar from '../components/EChartBar';
 import EChartLine from '../components/EChartLine';
 import ChartConfigModal from '../components/ChartConfigModal';
 import { ChartConfigProvider } from '../contexts/ChartConfigContext';
-import { apiUrl } from '../config/api';
+import { adminService } from '../services/supabaseAdmin';
 
 interface Stats {
   totalVisitors: number;
@@ -135,21 +135,18 @@ function AdminDashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  const checkAuth = async () => {
-    try {
-      const response = await fetch(apiUrl('/api/admin/verify'), {
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        navigate('/admin');
-      }
-    } catch (error) {
+  const checkAuth = () => {
+    if (!adminService.isAuthenticated()) {
       navigate('/admin');
     }
   };
 
   const loadData = async (isInitial: boolean = false) => {
+    if (!adminService.isAuthenticated()) {
+      navigate('/admin');
+      return;
+    }
+
     if (isInitial) {
       setInitialLoading(true);
     } else {
@@ -157,25 +154,12 @@ function AdminDashboard() {
     }
     
     try {
-      const [statsRes, visitorsRes, registrationsRes, demographicsRes] = await Promise.all([
-        fetch(apiUrl('/api/admin/stats'), { credentials: 'include' }),
-        fetch(apiUrl('/api/admin/visitors?limit=100'), { credentials: 'include' }),
-        fetch(apiUrl('/api/admin/registrations?limit=100'), { credentials: 'include' }),
-        fetch(apiUrl('/api/admin/demographics'), { credentials: 'include' })
+      const [statsData, visitorsData, registrationsData, demographicsData] = await Promise.all([
+        adminService.getStats(),
+        adminService.getVisitors(100),
+        adminService.getRegistrations(100),
+        adminService.getDemographics()
       ]);
-
-      if (!statsRes.ok || !visitorsRes.ok || !registrationsRes.ok || !demographicsRes.ok) {
-        if (statsRes.status === 401 || visitorsRes.status === 401 || registrationsRes.status === 401 || demographicsRes.status === 401) {
-          navigate('/admin');
-          return;
-        }
-        throw new Error('Erro ao carregar dados do servidor');
-      }
-
-      const statsData = await statsRes.json();
-      const visitorsData = await visitorsRes.json();
-      const registrationsData = await registrationsRes.json();
-      const demographicsData = await demographicsRes.json();
 
       setStats(statsData);
       setVisitors(visitorsData.visitors);
@@ -195,8 +179,7 @@ function AdminDashboard() {
 
   const loadVideo = async () => {
     try {
-      const response = await fetch(apiUrl('/api/admin/video'), { credentials: 'include' });
-      const data = await response.json();
+      const data = await adminService.getVideoConfig();
       
       if (data.video) {
         setCurrentVideo(data.video);
@@ -221,24 +204,15 @@ function AdminDashboard() {
     const effectiveVideoType = videoInputMode === 'google_drive' ? 'google_drive' : videoInputMode === 'vimeo' ? 'vimeo' : videoType;
 
     try {
-      const response = await fetch(apiUrl('/api/admin/video'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          video_url: videoUrl,
-          video_type: effectiveVideoType,
-          button_delay_seconds: buttonDelay
-        })
+      const result = await adminService.saveVideoConfig({
+        video_url: videoUrl,
+        video_type: effectiveVideoType,
+        button_delay_seconds: buttonDelay
       });
 
-      const data = await response.json();
-
-      if (data.success) {
+      if (result.success) {
         setVideoMessage('Vídeo salvo com sucesso!');
-        setCurrentVideo(data.video);
+        setCurrentVideo(result.video);
         setTimeout(() => setVideoMessage(''), 3000);
       } else {
         setVideoMessage('Erro ao salvar vídeo');
@@ -257,17 +231,11 @@ function AdminDashboard() {
     }
 
     try {
-      if (currentVideo.video_type === 'local') {
-        await fetch(apiUrl('/api/admin/video/local'), {
-          method: 'DELETE',
-          credentials: 'include'
-        });
-      } else {
-        await fetch(apiUrl(`/api/admin/video/${currentVideo.id}`), {
-          method: 'DELETE',
-          credentials: 'include'
-        });
-      }
+      const { supabase } = await import('../lib/supabase');
+      await supabase
+        .from('video_config')
+        .update({ is_active: false })
+        .eq('id', currentVideo.id);
 
       setCurrentVideo(null);
       setVideoUrl('');
@@ -303,80 +271,20 @@ function AdminDashboard() {
   };
 
   const handleUploadVideo = async () => {
-    if (!selectedFile) {
-      setVideoMessage('Selecione um arquivo de vídeo');
-      return;
-    }
-
-    setVideoSaving(true);
-    setUploadProgress(0);
-    setVideoMessage('');
-
-    try {
-      const formData = new FormData();
-      formData.append('video', selectedFile);
-      formData.append('button_delay_seconds', buttonDelay.toString());
-
-      const xhr = new XMLHttpRequest();
-      
-      xhr.upload.addEventListener('progress', (event) => {
-        if (event.lengthComputable) {
-          const progress = Math.round((event.loaded / event.total) * 100);
-          setUploadProgress(progress);
-        }
-      });
-
-      const uploadPromise = new Promise<any>((resolve, reject) => {
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            resolve(JSON.parse(xhr.responseText));
-          } else {
-            reject(new Error(xhr.responseText || 'Erro no upload'));
-          }
-        };
-        xhr.onerror = () => reject(new Error('Erro de rede'));
-      });
-
-      xhr.open('POST', apiUrl('/api/admin/video/upload'));
-      xhr.withCredentials = true;
-      xhr.send(formData);
-
-      const data = await uploadPromise;
-
-      if (data.success) {
-        setVideoMessage('Vídeo enviado com sucesso!');
-        setCurrentVideo(data.video);
-        setSelectedFile(null);
-        setUploadProgress(0);
-        setTimeout(() => setVideoMessage(''), 3000);
-      } else {
-        setVideoMessage(data.error || 'Erro ao fazer upload');
-      }
-    } catch (error: any) {
-      console.error('Erro no upload:', error);
-      setVideoMessage(error.message || 'Erro ao fazer upload do vídeo');
-    } finally {
-      setVideoSaving(false);
-    }
+    setVideoMessage('Upload de vídeo local não disponível. Use YouTube, Vimeo ou Google Drive.');
   };
 
   const viewVisitorDetails = async (visitorId: string) => {
     try {
-      const response = await fetch(apiUrl(`/api/admin/visitor/${visitorId}`), {
-        credentials: 'include'
-      });
-      const data = await response.json();
+      const data = await adminService.getVisitorDetails(visitorId);
       setSelectedVisitor(data);
     } catch (error) {
       console.error('Erro ao carregar detalhes:', error);
     }
   };
 
-  const handleLogout = async () => {
-    await fetch(apiUrl('/api/admin/logout'), {
-      method: 'POST',
-      credentials: 'include'
-    });
+  const handleLogout = () => {
+    adminService.logout();
     navigate('/admin');
   };
 
@@ -580,89 +488,11 @@ function AdminDashboard() {
   };
 
   const handleExportToWord = async () => {
-    try {
-      const response = await fetch(apiUrl('/api/admin/export/word'), {
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Erro ao exportar:', response.status, errorText);
-        
-        if (response.status === 401) {
-          alert('Sessão expirada. Por favor, faça login novamente.');
-          navigate('/admin');
-        } else {
-          alert(`Erro ao exportar para Word: ${response.status} - ${errorText || 'Erro desconhecido'}`);
-        }
-        return;
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `relatorio-analytics-${Date.now()}.docx`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
-      alert('Relatório exportado com sucesso!');
-    } catch (error) {
-      console.error('Erro ao exportar para Word:', error);
-      alert(`Erro ao exportar para Word: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
-    }
+    alert('Exportação para Word não disponível na versão atual. Use a exportação CSV.');
   };
 
   const handleImportWord = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Validar tipo de arquivo
-    if (!file.name.toLowerCase().endsWith('.docx')) {
-      alert('Por favor, selecione apenas arquivos Word modernos (.docx)');
-      event.target.value = '';
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const response = await fetch(apiUrl('/api/admin/import/word'), {
-        method: 'POST',
-        credentials: 'include',
-        body: formData
-      });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          alert('Sessão expirada. Por favor, faça login novamente.');
-          navigate('/admin');
-          event.target.value = '';
-          return;
-        }
-        
-        const errorData = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
-        alert(`Erro ao importar arquivo: ${errorData.error || 'Erro desconhecido'}`);
-        event.target.value = '';
-        return;
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
-        alert(`Importação concluída com sucesso!\n\n${data.message}\n\nEmails encontrados: ${data.data.emails.length}\nTelefones encontrados: ${data.data.phones.length}`);
-        console.log('Dados importados:', data.data);
-      } else {
-        alert(`Erro ao importar arquivo: ${data.error || 'Erro desconhecido'}`);
-      }
-    } catch (error) {
-      console.error('Erro ao importar Word:', error);
-      alert(`Erro ao importar arquivo: ${error instanceof Error ? error.message : 'Erro de conexão'}`);
-    }
-
+    alert('Importação de Word não disponível na versão atual.');
     event.target.value = '';
   };
 

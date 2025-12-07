@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Play } from 'lucide-react';
-import { apiUrl } from '../config/api';
+import { supabase } from '../lib/supabase';
 
 interface VideoPlayerProps {
   onButtonEnable: () => void;
@@ -119,11 +119,16 @@ function VideoPlayer({ onButtonEnable, onPlayStart }: VideoPlayerProps) {
 
   const loadVideoConfig = async () => {
     try {
-      const response = await fetch(apiUrl('/api/video/current'));
-      const data = await response.json();
+      const { data, error } = await supabase
+        .from('video_config')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
       
-      if (data.video) {
-        setVideoConfig(data.video);
+      if (!error && data) {
+        setVideoConfig(data);
       } else {
         setVideoConfig({
           id: 0,
