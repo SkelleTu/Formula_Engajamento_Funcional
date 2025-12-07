@@ -34,7 +34,7 @@ function LandingPage({ onNavigate, onNavigateToHome }: LandingPageProps) {
       <FloatingIcons />
 
       <div className="relative">
-        <header className="container mx-auto px-4 pt-12 pb-8 relative">
+        <header className="container mx-auto px-4 pt-12 pb-8 relative z-50">
           <Logo onClick={onNavigateToHome} />
           
           <Link 
@@ -45,7 +45,7 @@ function LandingPage({ onNavigate, onNavigateToHome }: LandingPageProps) {
         </header>
 
         <main className="container mx-auto px-4 pb-8">
-          <div className="max-w-5xl mx-auto text-center mb-12">
+          <div className="max-w-5xl mx-auto text-center mb-12 relative z-50">
             <div className="inline-block mb-8 px-6 py-2 bg-gradient-to-r from-pink-500/20 to-purple-500/20 rounded-full border border-pink-500/30">
               <p className="text-pink-300 font-semibold">Fórmula Engajamento</p>
             </div>
