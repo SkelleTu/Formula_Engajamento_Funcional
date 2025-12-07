@@ -87,7 +87,7 @@ function LandingPage({ onNavigate, onNavigateToHome }: LandingPageProps) {
 
           <div className="relative">
             {!videoPlaying && (
-              <div className="absolute inset-0 bg-black/80 backdrop-blur-sm z-10 rounded-xl"></div>
+              <div className="absolute inset-0 bg-black/70 backdrop-blur-[7px] z-10 rounded-xl"></div>
             )}
             
             <section className="max-w-6xl mx-auto mb-20">

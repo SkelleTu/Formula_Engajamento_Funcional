@@ -561,10 +561,7 @@ function VideoPlayer({ onButtonEnable, onPlayStart }: VideoPlayerProps) {
                   </div>
                 </div>
                 <p className="text-white text-xl md:text-2xl font-bold text-center px-4 mb-2">
-                  Clique para assistir
-                </p>
-                <p className="text-gray-300 text-sm md:text-base text-center px-4">
-                  Dê play para prosseguir com o conteúdo
+                  Acessar Material - Fórmula Engajamento
                 </p>
               </div>
             )}
