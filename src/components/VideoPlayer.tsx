@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
+import { Play } from 'lucide-react';
 import { apiUrl } from '../config/api';
 
 interface VideoPlayerProps {
   onButtonEnable: () => void;
+  onPlayStart?: () => void;
 }
 
 interface VideoConfig {
@@ -19,13 +21,13 @@ const DEFAULT_BUTTON_DELAY = 180;
 
 const STORAGE_KEY = 'video_progress';
 
-function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
+function VideoPlayer({ onButtonEnable, onPlayStart }: VideoPlayerProps) {
   const [videoConfig, setVideoConfig] = useState<VideoConfig | null>(null);
   const [buttonEnabled, setButtonEnabled] = useState(false);
   const [showHudOverlay, setShowHudOverlay] = useState(true);
-  const [isVideoStarted, setIsVideoStarted] = useState(false);
-  const [volume, setVolume] = useState(100);
-  const [showPlayButton, setShowPlayButton] = useState(true);
+  const [showPlayOverlay, setShowPlayOverlay] = useState(true);
+  const [, setIsVideoStarted] = useState(false);
+  const [, setVolume] = useState(100);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
   const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -34,10 +36,6 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
   const trackingStartedRef = useRef<boolean>(false);
   const hudOverlayTimeoutRef = useRef<any>(null);
   const currentVideoIdRef = useRef<string>('');
-  const hasTriedAutoplayRef = useRef<boolean>(false);
-  const documentClickListenerRef = useRef<any>(null);
-  const autoUnmuteTimerRef = useRef<any>(null);
-  const soundEnabledRef = useRef<boolean>(false);
   const videoConfigRef = useRef<VideoConfig | null>(null);
 
   const getSavedProgress = (videoId: string): number => {
@@ -63,48 +61,6 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
     } catch (e) {}
   };
 
-
-  const triggerPlay = () => {
-    if (videoConfig?.video_type === 'local' && localVideoRef.current) {
-      localVideoRef.current.play().catch(console.error);
-      if (soundEnabledRef.current) {
-        localVideoRef.current.muted = false;
-      }
-    } else if (playerRef.current && playerRef.current.playVideo && !isVideoStarted) {
-      playerRef.current.playVideo();
-      
-      setTimeout(() => {
-        if (playerRef.current && soundEnabledRef.current) {
-          if (playerRef.current.unMute) playerRef.current.unMute();
-          if (playerRef.current.setVolume) playerRef.current.setVolume(100);
-        }
-      }, 100);
-    }
-  };
-
-  const setupDocumentClickListener = () => {
-    if (documentClickListenerRef.current) return;
-    
-    const handleAnyInteraction = () => {
-      triggerPlay();
-      
-      if (documentClickListenerRef.current) {
-        document.removeEventListener('click', documentClickListenerRef.current, true);
-        document.removeEventListener('touchstart', documentClickListenerRef.current, true);
-        document.removeEventListener('keydown', documentClickListenerRef.current, true);
-        document.removeEventListener('scroll', documentClickListenerRef.current, true);
-        documentClickListenerRef.current = null;
-      }
-    };
-    
-    documentClickListenerRef.current = handleAnyInteraction;
-    
-    document.addEventListener('click', handleAnyInteraction, true);
-    document.addEventListener('touchstart', handleAnyInteraction, true);
-    document.addEventListener('keydown', handleAnyInteraction, true);
-    document.addEventListener('scroll', handleAnyInteraction, true);
-  };
-
   useEffect(() => {
     loadVideoConfig();
     
@@ -115,15 +71,6 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
       if (saveProgressIntervalRef.current) {
         clearInterval(saveProgressIntervalRef.current);
       }
-      if (autoUnmuteTimerRef.current) {
-        clearTimeout(autoUnmuteTimerRef.current);
-      }
-      if (documentClickListenerRef.current) {
-        document.removeEventListener('click', documentClickListenerRef.current, true);
-        document.removeEventListener('touchstart', documentClickListenerRef.current, true);
-        document.removeEventListener('keydown', documentClickListenerRef.current, true);
-        document.removeEventListener('scroll', documentClickListenerRef.current, true);
-      }
     };
   }, []);
 
@@ -133,24 +80,20 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
       
       if (videoConfig.video_type === 'local') {
         currentVideoIdRef.current = videoConfig.video_path || videoConfig.video_url;
-        setupLocalVideo();
       } else if (videoConfig.video_type === 'google_drive') {
         const fileId = getGoogleDriveFileId(videoConfig.video_url);
         if (fileId) {
           currentVideoIdRef.current = fileId;
-          setupGoogleDriveVideo();
         }
       } else if (videoConfig.video_type === 'vimeo') {
         const videoId = getVimeoVideoId(videoConfig.video_url);
         if (videoId) {
           currentVideoIdRef.current = videoId;
-          setupVimeoVideo();
         }
       } else {
         const videoId = getYouTubeVideoId(videoConfig.video_url);
         if (videoId) {
           currentVideoIdRef.current = videoId;
-          loadYouTubePlayer(videoId);
         }
       }
     }
@@ -201,6 +144,28 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
     }
   };
 
+  const handleManualPlay = () => {
+    setShowPlayOverlay(false);
+    setIsVideoStarted(true);
+    
+    if (onPlayStart) {
+      onPlayStart();
+    }
+    
+    if (videoConfig?.video_type === 'local') {
+      setupLocalVideo();
+    } else if (videoConfig?.video_type === 'google_drive') {
+      setupGoogleDriveVideo();
+    } else if (videoConfig?.video_type === 'vimeo') {
+      startVimeoManually();
+    } else {
+      const videoId = getYouTubeVideoId(videoConfig?.video_url || '');
+      if (videoId) {
+        loadYouTubePlayer(videoId);
+      }
+    }
+  };
+
   const setupLocalVideo = () => {
     if (!localVideoRef.current || !videoConfig) return;
 
@@ -211,14 +176,9 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
       video.currentTime = savedTime;
     }
 
-    video.muted = true;
+    video.muted = false;
     video.play().then(() => {
-      setIsVideoStarted(true);
       sessionStorage.setItem('video_sound_authorized', 'true');
-      
-      if (soundEnabledRef.current) {
-        video.muted = false;
-      }
       
       hudOverlayTimeoutRef.current = setTimeout(() => {
         setShowHudOverlay(false);
@@ -226,49 +186,9 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
       
       trackLocalVideoProgress();
       startSavingLocalProgress();
-    }).catch(() => {
-      setupDocumentClickListener();
+    }).catch((err) => {
+      console.error('Erro ao iniciar vídeo:', err);
     });
-  };
-
-  const [googleDriveStarted, setGoogleDriveStarted] = useState(false);
-  const googleDriveClickedRef = useRef(false);
-
-  const triggerGoogleDrivePlay = () => {
-    if (googleDriveClickedRef.current) return;
-    googleDriveClickedRef.current = true;
-
-    const iframe = document.getElementById('google-drive-player') as HTMLIFrameElement;
-    if (iframe) {
-      iframe.focus();
-      
-      try {
-        iframe.contentWindow?.postMessage({ action: 'play' }, '*');
-      } catch (e) {}
-      
-      const spaceEvent = new KeyboardEvent('keydown', {
-        key: ' ',
-        code: 'Space',
-        keyCode: 32,
-        which: 32,
-        bubbles: true
-      });
-      iframe.dispatchEvent(spaceEvent);
-      
-      const enterEvent = new KeyboardEvent('keydown', {
-        key: 'Enter',
-        code: 'Enter',
-        keyCode: 13,
-        which: 13,
-        bubbles: true
-      });
-      iframe.dispatchEvent(enterEvent);
-      
-      setTimeout(() => {
-        setGoogleDriveStarted(true);
-        setIsVideoStarted(true);
-      }, 1000);
-    }
   };
 
   const setupGoogleDriveVideo = () => {
@@ -277,46 +197,8 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
     hudOverlayTimeoutRef.current = setTimeout(() => {
       setShowHudOverlay(false);
     }, 5000);
-
-    const handleFirstInteraction = () => {
-      triggerGoogleDrivePlay();
-      document.removeEventListener('click', handleFirstInteraction, true);
-      document.removeEventListener('touchstart', handleFirstInteraction, true);
-      document.removeEventListener('scroll', handleFirstInteraction, true);
-      document.removeEventListener('mousemove', handleFirstInteraction, true);
-      document.removeEventListener('keydown', handleFirstInteraction, true);
-    };
-
-    document.addEventListener('click', handleFirstInteraction, true);
-    document.addEventListener('touchstart', handleFirstInteraction, true);
-    document.addEventListener('scroll', handleFirstInteraction, true);
-    document.addEventListener('mousemove', handleFirstInteraction, true);
-    document.addEventListener('keydown', handleFirstInteraction, true);
-
-    setTimeout(() => {
-      triggerGoogleDrivePlay();
-    }, 100);
     
     trackGoogleDriveProgress();
-  };
-
-  const setVimeoVolume = (newVolume: number) => {
-    const iframe = document.getElementById('vimeo-player') as HTMLIFrameElement;
-    if (iframe && iframe.contentWindow) {
-      const volumeValue = newVolume / 100;
-      iframe.contentWindow.postMessage(`{"method":"setVolume","value":${volumeValue}}`, '*');
-      setVolume(newVolume);
-    }
-  };
-
-  const increaseVolume = () => {
-    const newVolume = Math.min(100, volume + 20);
-    setVimeoVolume(newVolume);
-  };
-
-  const decreaseVolume = () => {
-    const newVolume = Math.max(0, volume - 20);
-    setVimeoVolume(newVolume);
   };
 
   const startVimeoManually = () => {
@@ -326,9 +208,6 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
       iframe.contentWindow.postMessage('{"method":"setVolume","value":1}', '*');
       iframe.contentWindow.postMessage('{"method":"setMuted","value":false}', '*');
       setVolume(100);
-      setShowPlayButton(false);
-      setIsVideoStarted(true);
-      soundEnabledRef.current = true;
       sessionStorage.setItem('video_sound_authorized', 'true');
       
       hudOverlayTimeoutRef.current = setTimeout(() => {
@@ -337,11 +216,6 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
       
       trackVimeoProgress();
     }
-  };
-
-  const setupVimeoVideo = () => {
-    if (!videoConfig) return;
-    setShowPlayButton(true);
   };
 
   const trackVimeoProgress = () => {
@@ -389,16 +263,7 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
   };
 
   const handleLocalVideoPlay = () => {
-    setIsVideoStarted(true);
     sessionStorage.setItem('video_sound_authorized', 'true');
-    
-    if (documentClickListenerRef.current) {
-      document.removeEventListener('click', documentClickListenerRef.current, true);
-      document.removeEventListener('touchstart', documentClickListenerRef.current, true);
-      document.removeEventListener('keydown', documentClickListenerRef.current, true);
-      document.removeEventListener('scroll', documentClickListenerRef.current, true);
-      documentClickListenerRef.current = null;
-    }
     
     hudOverlayTimeoutRef.current = setTimeout(() => {
       setShowHudOverlay(false);
@@ -489,7 +354,7 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
   const getVimeoEmbedUrl = (url: string): string | null => {
     const videoId = getVimeoVideoId(url);
     if (videoId) {
-      return `https://player.vimeo.com/video/${videoId}?autoplay=0&muted=0&loop=1&autopause=0&controls=0&title=0&byline=0&portrait=0&playsinline=1&api=1`;
+      return `https://player.vimeo.com/video/${videoId}?muted=0&loop=1&autopause=0&controls=0&title=0&byline=0&portrait=0&playsinline=1&api=1`;
     }
     return null;
   };
@@ -517,8 +382,8 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
       width: '100%',
       height: '100%',
       playerVars: {
-        autoplay: 1,
-        mute: 1,
+        autoplay: 0,
+        mute: 0,
         controls: 0,
         disablekb: 1,
         fs: 0,
@@ -548,43 +413,12 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
           }
           
           player.playVideo();
-          
-          setTimeout(() => {
-            if (!hasTriedAutoplayRef.current) {
-              hasTriedAutoplayRef.current = true;
-              
-              const state = player.getPlayerState ? player.getPlayerState() : -1;
-              
-              if (state !== 1) {
-                setupDocumentClickListener();
-              } else if (soundEnabledRef.current) {
-                if (player.unMute) player.unMute();
-                if (player.setVolume) player.setVolume(100);
-              }
-            }
-          }, 1000);
+          player.unMute();
+          player.setVolume(100);
         },
         onStateChange: (event: any) => {
           if (event.data === window.YT.PlayerState.PLAYING) {
-            setIsVideoStarted(true);
             sessionStorage.setItem('video_sound_authorized', 'true');
-            
-            if (documentClickListenerRef.current) {
-              document.removeEventListener('click', documentClickListenerRef.current, true);
-              document.removeEventListener('touchstart', documentClickListenerRef.current, true);
-              document.removeEventListener('keydown', documentClickListenerRef.current, true);
-              document.removeEventListener('scroll', documentClickListenerRef.current, true);
-              documentClickListenerRef.current = null;
-            }
-            
-            if (soundEnabledRef.current) {
-              setTimeout(() => {
-                if (playerRef.current) {
-                  if (playerRef.current.unMute) playerRef.current.unMute();
-                  if (playerRef.current.setVolume) playerRef.current.setVolume(100);
-                }
-              }, 300);
-            }
             
             hudOverlayTimeoutRef.current = setTimeout(() => {
               setShowHudOverlay(false);
@@ -678,153 +512,76 @@ function VideoPlayer({ onButtonEnable }: VideoPlayerProps) {
         <div className="aspect-video bg-black relative overflow-hidden">
           <div 
             id="video-player-container" 
-            className="absolute inset-0 w-full h-full"
+            className="w-full h-full relative"
           >
-            {videoConfig.video_type === 'local' ? (
+            {videoConfig.video_type === 'local' && videoConfig.video_path && !showPlayOverlay && (
               <video
                 ref={localVideoRef}
-                src={videoConfig.video_url}
-                className="w-full h-full object-cover"
+                src={videoConfig.video_path}
+                className="w-full h-full object-contain"
                 playsInline
-                loop
                 onPlay={handleLocalVideoPlay}
                 onEnded={handleLocalVideoEnded}
                 onPause={handleLocalVideoPause}
               />
-            ) : videoConfig.video_type === 'google_drive' ? (
-              <div className="absolute inset-0 w-full h-full">
-                <iframe
-                  id="google-drive-player"
-                  src={`${getGoogleDriveEmbedUrl(videoConfig.video_url) || ''}`}
-                  className="w-full h-full"
-                  allow="autoplay; encrypted-media; fullscreen"
-                  allowFullScreen
-                  frameBorder="0"
-                  style={{ 
-                    border: 'none',
-                    width: '100%',
-                    height: '100%',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0
-                  }}
-                />
-              </div>
-            ) : videoConfig.video_type === 'vimeo' ? (
-              <div className="absolute inset-0 w-full h-full">
-                <iframe
-                  id="vimeo-player"
-                  src={getVimeoEmbedUrl(videoConfig.video_url) || ''}
-                  className="w-full h-full"
-                  allow="autoplay; fullscreen; picture-in-picture"
-                  allowFullScreen
-                  frameBorder="0"
-                  style={{ 
-                    border: 'none',
-                    width: '100%',
-                    height: '100%',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0
-                  }}
-                />
-              </div>
-            ) : (
+            )}
+            
+            {videoConfig.video_type === 'google_drive' && !showPlayOverlay && (
+              <iframe
+                id="google-drive-player"
+                src={getGoogleDriveEmbedUrl(videoConfig.video_url) || ''}
+                className="w-full h-full"
+                allow="autoplay; encrypted-media"
+                allowFullScreen
+                style={{ border: 'none' }}
+              />
+            )}
+            
+            {videoConfig.video_type === 'vimeo' && !showPlayOverlay && (
+              <iframe
+                id="vimeo-player"
+                src={getVimeoEmbedUrl(videoConfig.video_url) || ''}
+                className="w-full h-full"
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+                style={{ border: 'none' }}
+              />
+            )}
+            
+            {videoConfig.video_type === 'youtube' && !showPlayOverlay && (
               <div id="youtube-player" className="w-full h-full"></div>
             )}
+            
+            {showPlayOverlay && (
+              <div 
+                className="absolute inset-0 bg-gradient-to-br from-gray-900 via-purple-900/90 to-gray-900 flex flex-col items-center justify-center cursor-pointer z-20"
+                onClick={handleManualPlay}
+              >
+                <div className="relative mb-6">
+                  <div className="absolute inset-0 bg-pink-500 rounded-full animate-ping opacity-30"></div>
+                  <div className="relative w-24 h-24 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center shadow-2xl shadow-pink-500/50 hover:scale-110 transition-transform duration-300">
+                    <Play className="w-12 h-12 text-white ml-2" fill="white" />
+                  </div>
+                </div>
+                <p className="text-white text-xl md:text-2xl font-bold text-center px-4 mb-2">
+                  Clique para assistir
+                </p>
+                <p className="text-gray-300 text-sm md:text-base text-center px-4">
+                  Dê play para prosseguir com o conteúdo
+                </p>
+              </div>
+            )}
           </div>
-          
-          {(videoConfig.video_type !== 'google_drive' || googleDriveStarted) && videoConfig.video_type !== 'vimeo' && (
-            <div 
-              className="absolute inset-0 z-30 cursor-default"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={(e) => e.preventDefault()}
-              onDoubleClick={(e) => e.preventDefault()}
-              onContextMenu={(e) => e.preventDefault()}
-            ></div>
-          )}
-          {videoConfig.video_type === 'vimeo' && (
-            <>
-              {showPlayButton && (
-                <div 
-                  className="absolute inset-0 z-40 cursor-pointer flex items-center justify-center"
-                  onClick={startVimeoManually}
-                  onTouchStart={startVimeoManually}
-                  style={{
-                    background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.2) 70%)'
-                  }}
-                >
-                  <div 
-                    className="flex flex-col items-center gap-4 p-8 rounded-2xl backdrop-blur-sm"
-                    style={{
-                      background: 'linear-gradient(135deg, rgba(168,85,247,0.4) 0%, rgba(236,72,153,0.4) 100%)',
-                      border: '2px solid rgba(255,255,255,0.3)',
-                      boxShadow: '0 0 40px rgba(168,85,247,0.5), 0 0 80px rgba(236,72,153,0.3)'
-                    }}
-                  >
-                    <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-all">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="white" stroke="white" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
-                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                      </svg>
-                    </div>
-                    <span className="text-white text-xl font-semibold tracking-wide">
-                      Clique para assistir
-                    </span>
-                  </div>
-                </div>
-              )}
-              {!showPlayButton && (
-                <div className="absolute bottom-4 right-4 z-50 flex items-center gap-2">
-                  <button
-                    onClick={decreaseVolume}
-                    className="w-10 h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center transition-all duration-200 border border-white/20"
-                    style={{ pointerEvents: 'auto' }}
-                    title="Diminuir volume"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                      <line x1="23" y1="12" x2="17" y2="12"></line>
-                    </svg>
-                  </button>
-                  <div className="px-3 py-1 bg-black/60 rounded-full text-white text-sm font-medium border border-white/20">
-                    {volume}%
-                  </div>
-                  <button
-                    onClick={increaseVolume}
-                    className="w-10 h-10 bg-black/60 hover:bg-black/80 rounded-full flex items-center justify-center transition-all duration-200 border border-white/20"
-                    style={{ pointerEvents: 'auto' }}
-                    title="Aumentar volume"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                      <line x1="20" y1="12" x2="14" y2="12"></line>
-                      <line x1="17" y1="9" x2="17" y2="15"></line>
-                    </svg>
-                  </button>
-                </div>
-              )}
-            </>
-          )}
-          
-          <div 
-            className="absolute top-0 left-0 right-0 z-50 pointer-events-none transition-opacity duration-700"
-            style={{
-              width: '100%',
-              height: '120px',
-              background: 'linear-gradient(to bottom, rgb(2, 2, 15) 0%, rgb(2, 2, 15) 70%, rgba(2, 2, 15, 0.5) 85%, transparent 100%)',
-              opacity: showHudOverlay ? 1 : 0,
-            }}
-          ></div>
-          
-          <div 
-            className="absolute bottom-0 left-0 right-0 z-50 pointer-events-none transition-opacity duration-700"
-            style={{
-              height: '40px',
-              background: 'linear-gradient(to top, rgb(2, 2, 15) 0%, rgb(2, 2, 15) 30%, rgba(2, 2, 15, 0.5) 60%, transparent 100%)',
-              opacity: showHudOverlay ? 1 : 0,
-            }}
-          ></div>
         </div>
+
+        {showHudOverlay && !showPlayOverlay && (
+          <div className="absolute top-3 left-3 flex items-center gap-2 z-10">
+            <div className="flex items-center gap-1 bg-red-600 px-2 py-1 rounded text-xs font-bold text-white">
+              <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+              AO VIVO
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

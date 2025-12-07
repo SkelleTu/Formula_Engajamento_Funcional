@@ -13,9 +13,14 @@ interface LandingPageProps {
 
 function LandingPage({ onNavigate, onNavigateToHome }: LandingPageProps) {
   const [buttonEnabled, setButtonEnabled] = useState(false);
+  const [videoPlaying, setVideoPlaying] = useState(false);
 
   const handleButtonEnable = () => {
     setButtonEnabled(true);
+  };
+
+  const handlePlayStart = () => {
+    setVideoPlaying(true);
   };
 
   return (
@@ -47,7 +52,7 @@ function LandingPage({ onNavigate, onNavigateToHome }: LandingPageProps) {
           </div>
 
           <div className="max-w-4xl mx-auto mb-16 relative group">
-            <VideoPlayer onButtonEnable={handleButtonEnable} />
+            <VideoPlayer onButtonEnable={handleButtonEnable} onPlayStart={handlePlayStart} />
 
             {buttonEnabled && (
               <button
@@ -80,269 +85,269 @@ function LandingPage({ onNavigate, onNavigateToHome }: LandingPageProps) {
             </div>
           </div>
 
-          <section className="max-w-6xl mx-auto mb-20">
-            <h2 className="text-4xl md:text-5xl font-bold text-center mb-4 text-white">
-              O Que Você Vai Aprender
-            </h2>
-            <p className="text-center text-gray-400 text-lg mb-12">
-              Desenvolva habilidades práticas que transformarão sua presença digital
-            </p>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[
-                {
-                  icon: TrendingUp,
-                  title: 'Engajamento Real',
-                  description: 'Aprenda técnicas comprovadas para aumentar curtidas, comentários e compartilhamentos de forma orgânica.',
-                  color: 'from-pink-500 to-rose-500'
-                },
-                {
-                  icon: Rocket,
-                  title: 'Crescimento Acelerado',
-                  description: 'Estratégias para fazer seu perfil crescer de forma consistente e sustentável.',
-                  color: 'from-purple-500 to-violet-500'
-                },
-                {
-                  icon: Users,
-                  title: 'Comunidade Engajada',
-                  description: 'Construa uma audiência fiel que realmente se importa com seu conteúdo.',
-                  color: 'from-pink-500 to-purple-500'
-                },
-                {
-                  icon: Target,
-                  title: 'Conteúdo que Converte',
-                  description: 'Crie postagens que gerem conversas e transformem seguidores em clientes.',
-                  color: 'from-rose-500 to-pink-500'
-                },
-                {
-                  icon: Zap,
-                  title: 'Viralização Estratégica',
-                  description: 'Entenda os algoritmos e faça seus conteúdos alcançarem milhares de pessoas.',
-                  color: 'from-violet-500 to-purple-500'
-                },
-                {
-                  icon: Award,
-                  title: 'Resultados Rápidos',
-                  description: 'Implemente as estratégias e veja os resultados já nas primeiras semanas.',
-                  color: 'from-purple-500 to-pink-500'
-                }
-              ].map((item, index) => (
-                <div
-                  key={index}
-                  className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6 hover:border-pink-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-pink-500/20"
-                >
-                  <div className={`w-14 h-14 rounded-lg bg-gradient-to-br ${item.color} flex items-center justify-center mb-4`}>
-                    <item.icon className="w-7 h-7 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-3">{item.title}</h3>
-                  <p className="text-gray-400 leading-relaxed">{item.description}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Visual Sales Funnel Section */}
-          <section className="max-w-6xl mx-auto mb-20">
-            <div className="text-center mb-12">
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-                O Poder das Redes Sociais
-              </h2>
-              <p className="text-gray-400 text-lg">
-                Veja como seu engajamento pode crescer exponencialmente
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8">
-              {/* Funnel Stage 1 */}
-              <div className="relative">
-                <div className="bg-gradient-to-br from-pink-500/20 to-pink-600/20 backdrop-blur-sm border-2 border-pink-500/50 rounded-2xl p-6 text-center hover:scale-105 transition-transform duration-300">
-                  <div className="w-20 h-20 bg-gradient-to-br from-pink-500 to-pink-600 rounded-full mx-auto mb-4 flex items-center justify-center shadow-lg shadow-pink-500/50">
-                    <Heart className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-3 leading-tight">Curtidas</h3>
-                  <div className="text-5xl font-bold text-transparent bg-gradient-to-r from-pink-400 to-pink-600 bg-clip-text mb-2">
-                    +500%
-                  </div>
-                  <p className="text-gray-300 text-sm">Aumento médio em engajamento</p>
-                  <div className="mt-4 flex items-center justify-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-green-400" />
-                    <span className="text-green-400 font-semibold text-sm">Crescimento Real</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Funnel Stage 2 */}
-              <div className="relative">
-                <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 backdrop-blur-sm border-2 border-purple-500/50 rounded-2xl p-6 text-center hover:scale-105 transition-transform duration-300">
-                  <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center shadow-lg shadow-purple-500/50">
-                    <MessageCircle className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-3 leading-tight">Comentários</h3>
-                  <div className="text-5xl font-bold text-transparent bg-gradient-to-r from-purple-400 to-purple-600 bg-clip-text mb-2">
-                    +350%
-                  </div>
-                  <p className="text-gray-300 text-sm">Mais interações autênticas</p>
-                  <div className="mt-4 flex items-center justify-center gap-2">
-                    <Users className="w-5 h-5 text-blue-400" />
-                    <span className="text-blue-400 font-semibold text-sm">Comunidade Ativa</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Funnel Stage 3 */}
-              <div className="relative">
-                <div className="bg-gradient-to-br from-pink-600/20 to-purple-600/20 backdrop-blur-sm border-2 border-pink-600/50 rounded-2xl p-6 text-center hover:scale-105 transition-transform duration-300">
-                  <div className="w-20 h-20 bg-gradient-to-br from-pink-600 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center shadow-lg shadow-pink-600/50">
-                    <Share2 className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-3 leading-tight">Compartilha-<br/>mentos</h3>
-                  <div className="text-5xl font-bold text-transparent bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text mb-2">
-                    +600%
-                  </div>
-                  <p className="text-gray-300 text-sm">Alcance viral orgânico</p>
-                  <div className="mt-4 flex items-center justify-center gap-2">
-                    <Rocket className="w-5 h-5 text-yellow-400" />
-                    <span className="text-yellow-400 font-semibold text-sm">Viralização</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section className="max-w-4xl mx-auto mb-20">
-            <div className="bg-gradient-to-br from-gray-900/80 to-purple-900/80 backdrop-blur-sm border-2 border-pink-500/30 rounded-2xl p-8 md:p-12">
-              <div className="text-center mb-8">
-                <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
-                  Conheça Seu Mentor
+          {videoPlaying && (
+            <>
+              <section className="max-w-6xl mx-auto mb-20">
+                <h2 className="text-4xl md:text-5xl font-bold text-center mb-4 text-white">
+                  O Que Você Vai Aprender
                 </h2>
-                <p className="text-gray-400 text-lg">
-                  Aprenda com quem realmente entende de engajamento nas redes sociais
+                <p className="text-center text-gray-400 text-lg mb-12">
+                  Desenvolva habilidades práticas que transformarão sua presença digital
                 </p>
-              </div>
 
-              <div className="flex flex-col md:flex-row items-center gap-8">
-                <div className="relative w-48 h-48 flex-shrink-0">
-                  <div className="absolute inset-0 bg-gradient-to-br from-pink-500 to-purple-500 rounded-full animate-pulse opacity-50"></div>
-                  <div className="relative w-full h-full rounded-full bg-gradient-to-br from-pink-500 to-purple-500 p-1.5">
-                    <div className="w-full h-full rounded-full overflow-hidden border-4 border-gray-900">
-                      <img 
-                        src={juliaoPhoto} 
-                        alt="Júlio Calori - Julião" 
-                        className="w-full h-full object-cover object-center"
-                      />
-                    </div>
-                  </div>
-                  <div className="absolute -top-2 -right-2 w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center border-4 border-gray-900 shadow-lg">
-                    <Crown className="w-6 h-6 text-white" />
-                  </div>
-                </div>
-
-                <div className="flex-1 text-center md:text-left">
-                  <h3 className="text-3xl font-bold text-white mb-2 flex items-center justify-center md:justify-start gap-2">
-                    Júlio Calori
-                    <Sparkles className="w-6 h-6 text-yellow-400" />
-                  </h3>
-                  <p className="text-pink-400 text-xl mb-4 font-semibold">Conhecido como "Julião"</p>
-                  
-                  <div className="space-y-3 text-gray-300 leading-relaxed">
-                    <p className="flex items-start gap-2">
-                      <Star className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-1" />
-                      <span><strong className="text-white">Cristão e promotor independente</strong>, líder com mais de 20 anos de experiência em empreendedorismo, líder de marketing de rede e formação de equipes.</span>
-                    </p>
-                    
-                    <p className="flex items-start gap-2">
-                      <Sparkles className="w-5 h-5 text-pink-400 flex-shrink-0 mt-1" />
-                      <span>Já impactou muitas pessoas com seu propósito de <strong className="text-pink-300">moldar mentes para pensar grande</strong>, agir com sabedoria e viver com propósito. Aonde tocamos, pisamos e olhamos algo gigantesco sempre acontece.</span>
-                    </p>
-                    
-                    <p className="flex items-start gap-2">
-                      <Rocket className="w-5 h-5 text-purple-400 flex-shrink-0 mt-1" />
-                      <span>Aqui, você aprenderá a <strong className="text-purple-300">evoluir de dentro pra fora</strong>. Meu e-book é dinâmico e didático. Convido você, para dar os primeiros passos e transformar sua mentalidade hoje!</span>
-                    </p>
-                    
-                    <p className="flex items-start gap-2">
-                      <Globe className="w-5 h-5 text-blue-400 flex-shrink-0 mt-1" />
-                      <span>Aprendendo a <strong className="text-blue-300">crescer nas redes sociais</strong>, alcançando muitos com o mesmo propósito de vida. <strong className="text-white">Conte comigo.</strong></span>
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-center md:justify-start gap-4 mt-6">
-                    <div className="flex items-center gap-2 bg-pink-500/20 px-4 py-2 rounded-full border border-pink-500/30">
-                      <Users className="w-4 h-4 text-pink-400" />
-                      <span className="text-pink-300 text-sm font-semibold">20+ Anos</span>
-                    </div>
-                    <div className="flex items-center gap-2 bg-purple-500/20 px-4 py-2 rounded-full border border-purple-500/30">
-                      <Award className="w-4 h-4 text-purple-400" />
-                      <span className="text-purple-300 text-sm font-semibold">Mentor</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section className="max-w-3xl mx-auto mb-20">
-            <div className="bg-gradient-to-br from-pink-500/10 to-purple-500/10 backdrop-blur-sm border-2 border-pink-500/50 rounded-2xl p-8 md:p-12 text-center">
-              <div className="inline-block mb-6 px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full">
-                <p className="text-white font-bold">Oferta Especial</p>
-              </div>
-
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                Comece Sua Transformação
-              </h2>
-              <p className="text-gray-300 text-lg mb-8">
-                Invista no seu crescimento digital hoje mesmo
-              </p>
-
-              <div className="mb-8">
-                <div className="text-5xl md:text-6xl font-bold text-transparent bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text mb-2">
-                  R$ 89,99
-                </div>
-                <p className="text-gray-400">Investimento único</p>
-              </div>
-
-              <div className="bg-gray-900/50 rounded-xl p-6 mb-8 text-left">
-                <p className="text-white font-semibold mb-4 text-center">O que está incluído:</p>
-                <ul className="space-y-3">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {[
-                    'Acesso vitalício ao curso completo',
-                    '8 módulos práticos e objetivos',
-                    'Material de apoio em PDF',
-                    'Templates prontos para usar',
-                    'Grupo exclusivo de alunos',
-                    'Certificado de conclusão',
-                    'Atualizações gratuitas',
-                    'Suporte direto com o Julião'
+                    {
+                      icon: TrendingUp,
+                      title: 'Engajamento Real',
+                      description: 'Aprenda técnicas comprovadas para aumentar curtidas, comentários e compartilhamentos de forma orgânica.',
+                      color: 'from-pink-500 to-rose-500'
+                    },
+                    {
+                      icon: Rocket,
+                      title: 'Crescimento Acelerado',
+                      description: 'Estratégias para fazer seu perfil crescer de forma consistente e sustentável.',
+                      color: 'from-purple-500 to-violet-500'
+                    },
+                    {
+                      icon: Users,
+                      title: 'Comunidade Engajada',
+                      description: 'Construa uma audiência fiel que realmente se importa com seu conteúdo.',
+                      color: 'from-pink-500 to-purple-500'
+                    },
+                    {
+                      icon: Target,
+                      title: 'Conteúdo que Converte',
+                      description: 'Crie postagens que gerem conversas e transformem seguidores em clientes.',
+                      color: 'from-rose-500 to-pink-500'
+                    },
+                    {
+                      icon: Zap,
+                      title: 'Viralização Estratégica',
+                      description: 'Entenda os algoritmos e faça seus conteúdos alcançarem milhares de pessoas.',
+                      color: 'from-violet-500 to-purple-500'
+                    },
+                    {
+                      icon: Award,
+                      title: 'Resultados Rápidos',
+                      description: 'Implemente as estratégias e veja os resultados já nas primeiras semanas.',
+                      color: 'from-purple-500 to-pink-500'
+                    }
                   ].map((item, index) => (
-                    <li key={index} className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 text-pink-400 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-300">{item}</span>
-                    </li>
+                    <div
+                      key={index}
+                      className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6 hover:border-pink-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-pink-500/20"
+                    >
+                      <div className={`w-14 h-14 rounded-lg bg-gradient-to-br ${item.color} flex items-center justify-center mb-4`}>
+                        <item.icon className="w-7 h-7 text-white" />
+                      </div>
+                      <h3 className="text-xl font-bold text-white mb-3">{item.title}</h3>
+                      <p className="text-gray-400 leading-relaxed">{item.description}</p>
+                    </div>
                   ))}
-                </ul>
-              </div>
+                </div>
+              </section>
 
-              <button
-                onClick={onNavigate}
-                className="w-full py-6 bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white text-xl font-bold rounded-xl shadow-lg shadow-pink-500/50 hover:shadow-pink-500/70 transition-all duration-300 transform hover:scale-105 mb-6"
-              >
-                Quero Garantir Minha Vaga Agora
-              </button>
+              <section className="max-w-6xl mx-auto mb-20">
+                <div className="text-center mb-12">
+                  <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+                    O Poder das Redes Sociais
+                  </h2>
+                  <p className="text-gray-400 text-lg">
+                    Veja como seu engajamento pode crescer exponencialmente
+                  </p>
+                </div>
 
-              <div className="space-y-2 text-sm">
-                <p className="text-gray-400 flex items-center justify-center gap-2">
-                  <span className="text-green-400">🔒</span> Pagamento 100% seguro
-                </p>
-                <p className="text-gray-400 flex items-center justify-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-400" />
-                  Garantia de 7 dias
-                </p>
-                <p className="text-pink-400 font-semibold flex items-center justify-center gap-2">
-                  <span>⚠️</span> Oferta por tempo limitado - Apenas 15 vagas restantes
-                </p>
-              </div>
-            </div>
-          </section>
+                <div className="grid md:grid-cols-3 gap-8">
+                  <div className="relative">
+                    <div className="bg-gradient-to-br from-pink-500/20 to-pink-600/20 backdrop-blur-sm border-2 border-pink-500/50 rounded-2xl p-6 text-center hover:scale-105 transition-transform duration-300">
+                      <div className="w-20 h-20 bg-gradient-to-br from-pink-500 to-pink-600 rounded-full mx-auto mb-4 flex items-center justify-center shadow-lg shadow-pink-500/50">
+                        <Heart className="w-10 h-10 text-white" />
+                      </div>
+                      <h3 className="text-xl font-bold text-white mb-3 leading-tight">Curtidas</h3>
+                      <div className="text-5xl font-bold text-transparent bg-gradient-to-r from-pink-400 to-pink-600 bg-clip-text mb-2">
+                        +500%
+                      </div>
+                      <p className="text-gray-300 text-sm">Aumento médio em engajamento</p>
+                      <div className="mt-4 flex items-center justify-center gap-2">
+                        <TrendingUp className="w-5 h-5 text-green-400" />
+                        <span className="text-green-400 font-semibold text-sm">Crescimento Real</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="relative">
+                    <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 backdrop-blur-sm border-2 border-purple-500/50 rounded-2xl p-6 text-center hover:scale-105 transition-transform duration-300">
+                      <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center shadow-lg shadow-purple-500/50">
+                        <MessageCircle className="w-10 h-10 text-white" />
+                      </div>
+                      <h3 className="text-xl font-bold text-white mb-3 leading-tight">Comentários</h3>
+                      <div className="text-5xl font-bold text-transparent bg-gradient-to-r from-purple-400 to-purple-600 bg-clip-text mb-2">
+                        +350%
+                      </div>
+                      <p className="text-gray-300 text-sm">Mais interações autênticas</p>
+                      <div className="mt-4 flex items-center justify-center gap-2">
+                        <Users className="w-5 h-5 text-blue-400" />
+                        <span className="text-blue-400 font-semibold text-sm">Comunidade Ativa</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="relative">
+                    <div className="bg-gradient-to-br from-pink-600/20 to-purple-600/20 backdrop-blur-sm border-2 border-pink-600/50 rounded-2xl p-6 text-center hover:scale-105 transition-transform duration-300">
+                      <div className="w-20 h-20 bg-gradient-to-br from-pink-600 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center shadow-lg shadow-pink-600/50">
+                        <Share2 className="w-10 h-10 text-white" />
+                      </div>
+                      <h3 className="text-xl font-bold text-white mb-3 leading-tight">Compartilha-<br/>mentos</h3>
+                      <div className="text-5xl font-bold text-transparent bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text mb-2">
+                        +600%
+                      </div>
+                      <p className="text-gray-300 text-sm">Alcance viral orgânico</p>
+                      <div className="mt-4 flex items-center justify-center gap-2">
+                        <Rocket className="w-5 h-5 text-yellow-400" />
+                        <span className="text-yellow-400 font-semibold text-sm">Viralização</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section className="max-w-4xl mx-auto mb-20">
+                <div className="bg-gradient-to-br from-gray-900/80 to-purple-900/80 backdrop-blur-sm border-2 border-pink-500/30 rounded-2xl p-8 md:p-12">
+                  <div className="text-center mb-8">
+                    <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
+                      Conheça Seu Mentor
+                    </h2>
+                    <p className="text-gray-400 text-lg">
+                      Aprenda com quem realmente entende de engajamento nas redes sociais
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col md:flex-row items-center gap-8">
+                    <div className="relative w-48 h-48 flex-shrink-0">
+                      <div className="absolute inset-0 bg-gradient-to-br from-pink-500 to-purple-500 rounded-full animate-pulse opacity-50"></div>
+                      <div className="relative w-full h-full rounded-full bg-gradient-to-br from-pink-500 to-purple-500 p-1.5">
+                        <div className="w-full h-full rounded-full overflow-hidden border-4 border-gray-900">
+                          <img 
+                            src={juliaoPhoto} 
+                            alt="Júlio Calori - Julião" 
+                            className="w-full h-full object-cover object-center"
+                          />
+                        </div>
+                      </div>
+                      <div className="absolute -top-2 -right-2 w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center border-4 border-gray-900 shadow-lg">
+                        <Crown className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+
+                    <div className="flex-1 text-center md:text-left">
+                      <h3 className="text-3xl font-bold text-white mb-2 flex items-center justify-center md:justify-start gap-2">
+                        Júlio Calori
+                        <Sparkles className="w-6 h-6 text-yellow-400" />
+                      </h3>
+                      <p className="text-pink-400 text-xl mb-4 font-semibold">Conhecido como "Julião"</p>
+                      
+                      <div className="space-y-3 text-gray-300 leading-relaxed">
+                        <p className="flex items-start gap-2">
+                          <Star className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-1" />
+                          <span><strong className="text-white">Cristão e promotor independente</strong>, líder com mais de 20 anos de experiência em empreendedorismo, líder de marketing de rede e formação de equipes.</span>
+                        </p>
+                        
+                        <p className="flex items-start gap-2">
+                          <Sparkles className="w-5 h-5 text-pink-400 flex-shrink-0 mt-1" />
+                          <span>Já impactou muitas pessoas com seu propósito de <strong className="text-pink-300">moldar mentes para pensar grande</strong>, agir com sabedoria e viver com propósito. Aonde tocamos, pisamos e olhamos algo gigantesco sempre acontece.</span>
+                        </p>
+                        
+                        <p className="flex items-start gap-2">
+                          <Rocket className="w-5 h-5 text-purple-400 flex-shrink-0 mt-1" />
+                          <span>Aqui, você aprenderá a <strong className="text-purple-300">evoluir de dentro pra fora</strong>. Meu e-book é dinâmico e didático. Convido você, para dar os primeiros passos e transformar sua mentalidade hoje!</span>
+                        </p>
+                        
+                        <p className="flex items-start gap-2">
+                          <Globe className="w-5 h-5 text-blue-400 flex-shrink-0 mt-1" />
+                          <span>Aprendendo a <strong className="text-blue-300">crescer nas redes sociais</strong>, alcançando muitos com o mesmo propósito de vida. <strong className="text-white">Conte comigo.</strong></span>
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-center md:justify-start gap-4 mt-6">
+                        <div className="flex items-center gap-2 bg-pink-500/20 px-4 py-2 rounded-full border border-pink-500/30">
+                          <Users className="w-4 h-4 text-pink-400" />
+                          <span className="text-pink-300 text-sm font-semibold">20+ Anos</span>
+                        </div>
+                        <div className="flex items-center gap-2 bg-purple-500/20 px-4 py-2 rounded-full border border-purple-500/30">
+                          <Award className="w-4 h-4 text-purple-400" />
+                          <span className="text-purple-300 text-sm font-semibold">Mentor</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section className="max-w-3xl mx-auto mb-20">
+                <div className="bg-gradient-to-br from-pink-500/10 to-purple-500/10 backdrop-blur-sm border-2 border-pink-500/50 rounded-2xl p-8 md:p-12 text-center">
+                  <div className="inline-block mb-6 px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full">
+                    <p className="text-white font-bold">Oferta Especial</p>
+                  </div>
+
+                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                    Comece Sua Transformação
+                  </h2>
+                  <p className="text-gray-300 text-lg mb-8">
+                    Invista no seu crescimento digital hoje mesmo
+                  </p>
+
+                  <div className="mb-8">
+                    <div className="text-5xl md:text-6xl font-bold text-transparent bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text mb-2">
+                      R$ 89,99
+                    </div>
+                    <p className="text-gray-400">Investimento único</p>
+                  </div>
+
+                  <div className="bg-gray-900/50 rounded-xl p-6 mb-8 text-left">
+                    <p className="text-white font-semibold mb-4 text-center">O que está incluído:</p>
+                    <ul className="space-y-3">
+                      {[
+                        'Acesso vitalício ao curso completo',
+                        '8 módulos práticos e objetivos',
+                        'Material de apoio em PDF',
+                        'Templates prontos para usar',
+                        'Grupo exclusivo de alunos',
+                        'Certificado de conclusão',
+                        'Atualizações gratuitas',
+                        'Suporte direto com o Julião'
+                      ].map((item, index) => (
+                        <li key={index} className="flex items-start gap-3">
+                          <CheckCircle className="w-5 h-5 text-pink-400 flex-shrink-0 mt-0.5" />
+                          <span className="text-gray-300">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <button
+                    onClick={onNavigate}
+                    className="w-full py-6 bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white text-xl font-bold rounded-xl shadow-lg shadow-pink-500/50 hover:shadow-pink-500/70 transition-all duration-300 transform hover:scale-105 mb-6"
+                  >
+                    Quero Garantir Minha Vaga Agora
+                  </button>
+
+                  <div className="space-y-2 text-sm">
+                    <p className="text-gray-400 flex items-center justify-center gap-2">
+                      <span className="text-green-400">🔒</span> Pagamento 100% seguro
+                    </p>
+                    <p className="text-gray-400 flex items-center justify-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-400" />
+                      Garantia de 7 dias
+                    </p>
+                    <p className="text-pink-400 font-semibold flex items-center justify-center gap-2">
+                      <span>⚠️</span> Oferta por tempo limitado - Apenas 15 vagas restantes
+                    </p>
+                  </div>
+                </div>
+              </section>
+            </>
+          )}
         </main>
 
         <footer className="border-t border-gray-800 bg-gray-900/50 backdrop-blur-sm">

@@ -5,6 +5,30 @@ Funil is a video-based landing page application designed to capture leads throug
 
 ## Recent Changes (December 2025)
 
+### Play Obrigatório para Liberar Conteúdo
+**Date**: December 07, 2025
+**Status**: ✅ Implemented and Tested
+
+Removed all autoplay functionality and implemented mandatory user interaction to start video playback. This ensures the video plays with sound from the beginning.
+
+**Changes Made:**
+1. ✅ Removed all autoplay configurations from VideoPlayer component
+2. ✅ Added play overlay with "Clique para assistir" message
+3. ✅ Page content (sections below video) only appears after user clicks play
+4. ✅ CTA button below video still requires 180 seconds of watch time to unlock
+
+**How It Works:**
+- When the page loads, the video player shows a play button overlay
+- User must click to start the video (ensures sound is enabled)
+- After clicking play, the rest of the page content becomes visible
+- The "Quero Transformar Meu Engajamento" button unlocks after 180 seconds
+
+**Files Modified:**
+- `src/components/VideoPlayer.tsx` - Removed autoplay, added play overlay
+- `src/pages/LandingPage.tsx` - Added conditional rendering based on video state
+
+---
+
 ### Sistema de Upload de Vídeos Locais
 **Date**: December 02, 2025
 **Status**: ✅ Implemented and Tested
