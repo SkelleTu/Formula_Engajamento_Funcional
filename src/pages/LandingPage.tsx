@@ -27,6 +27,10 @@ function LandingPage({ onNavigate, onNavigateToHome }: LandingPageProps) {
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-purple-950 to-gray-950 overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(236,72,153,0.15),transparent_50%),radial-gradient(circle_at_70%_60%,rgba(168,85,247,0.15),transparent_50%)]"></div>
       
+      {!videoPlaying && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-[4px] z-40 pointer-events-none"></div>
+      )}
+      
       <FloatingIcons />
 
       <div className="relative">
@@ -51,7 +55,7 @@ function LandingPage({ onNavigate, onNavigateToHome }: LandingPageProps) {
             </p>
           </div>
 
-          <div className="max-w-4xl mx-auto mb-16 relative group">
+          <div className="max-w-4xl mx-auto mb-16 relative group z-50">
             <VideoPlayer onButtonEnable={handleButtonEnable} onPlayStart={handlePlayStart} />
 
             {buttonEnabled && (
@@ -86,10 +90,6 @@ function LandingPage({ onNavigate, onNavigateToHome }: LandingPageProps) {
           </div>
 
           <div className="relative">
-            {!videoPlaying && (
-              <div className="absolute inset-0 bg-black/70 backdrop-blur-[7px] z-10 rounded-xl"></div>
-            )}
-            
             <section className="max-w-6xl mx-auto mb-20">
               <h2 className="text-4xl md:text-5xl font-bold text-center mb-4 text-white">
                 O Que Você Vai Aprender
