@@ -62,7 +62,7 @@ function ConfirmationPage({ userData, onNavigateToHome, onBack }: ConfirmationPa
 
           <div className="space-y-4">
             <a
-              href="https://hotm.art/dc7aAC"
+              href="https://hotmart.com/pt-br/marketplace/produtos/dica-como-chegar-20-mil-seguidores/W97175200S"
               target="_blank"
               rel="noopener noreferrer"
               className="block w-full"
