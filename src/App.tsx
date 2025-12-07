@@ -5,7 +5,7 @@ import RegistrationPage from './pages/RegistrationPage';
 import ConfirmationPage from './pages/ConfirmationPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboard from './pages/AdminDashboard';
-import { analytics } from './utils/analytics';
+import { analytics } from './services/supabaseAnalytics';
 import { inject } from '@vercel/analytics';
 import { initGA, trackPageView } from './utils/googleAnalytics';
 import { ErrorProvider } from './contexts/ErrorContext';

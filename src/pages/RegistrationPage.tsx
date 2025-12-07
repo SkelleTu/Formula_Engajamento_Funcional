@@ -3,7 +3,7 @@ import { User, Phone, Mail } from 'lucide-react';
 import Logo from '../components/Logo';
 import FloatingIcons from '../components/FloatingIcons';
 import BackButton from '../components/BackButton';
-import { analytics } from '../utils/analytics';
+import { analytics } from '../services/supabaseAnalytics';
 
 interface RegistrationPageProps {
   onComplete: (data: { name: string; phone: string; email: string }) => void;
