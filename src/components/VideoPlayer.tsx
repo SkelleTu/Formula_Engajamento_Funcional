@@ -26,8 +26,6 @@ function VideoPlayer({ onButtonEnable, onPlayStart }: VideoPlayerProps) {
   const [buttonEnabled, setButtonEnabled] = useState(false);
   const [showHudOverlay, setShowHudOverlay] = useState(true);
   const [showPlayOverlay, setShowPlayOverlay] = useState(true);
-  const [, setIsVideoStarted] = useState(false);
-  const [, setVolume] = useState(100);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
   const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -99,6 +97,7 @@ function VideoPlayer({ onButtonEnable, onPlayStart }: VideoPlayerProps) {
     }
   }, [videoConfig]);
 
+
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (videoConfig?.video_type === 'local' && localVideoRef.current && currentVideoIdRef.current) {
@@ -146,7 +145,6 @@ function VideoPlayer({ onButtonEnable, onPlayStart }: VideoPlayerProps) {
 
   const handleManualPlay = () => {
     setShowPlayOverlay(false);
-    setIsVideoStarted(true);
     
     if (onPlayStart) {
       onPlayStart();
@@ -207,7 +205,6 @@ function VideoPlayer({ onButtonEnable, onPlayStart }: VideoPlayerProps) {
       iframe.contentWindow.postMessage('{"method":"play"}', '*');
       iframe.contentWindow.postMessage('{"method":"setVolume","value":1}', '*');
       iframe.contentWindow.postMessage('{"method":"setMuted","value":false}', '*');
-      setVolume(100);
       sessionStorage.setItem('video_sound_authorized', 'true');
       
       hudOverlayTimeoutRef.current = setTimeout(() => {
@@ -354,7 +351,7 @@ function VideoPlayer({ onButtonEnable, onPlayStart }: VideoPlayerProps) {
   const getVimeoEmbedUrl = (url: string): string | null => {
     const videoId = getVimeoVideoId(url);
     if (videoId) {
-      return `https://player.vimeo.com/video/${videoId}?muted=0&loop=1&autopause=0&controls=0&title=0&byline=0&portrait=0&playsinline=1&api=1`;
+      return `https://player.vimeo.com/video/${videoId}?muted=1&loop=1&autopause=0&controls=0&title=0&byline=0&portrait=0&playsinline=1&api=1`;
     }
     return null;
   };
@@ -382,7 +379,7 @@ function VideoPlayer({ onButtonEnable, onPlayStart }: VideoPlayerProps) {
       width: '100%',
       height: '100%',
       playerVars: {
-        autoplay: 0,
+        autoplay: 1,
         mute: 0,
         controls: 0,
         disablekb: 1,
@@ -537,7 +534,7 @@ function VideoPlayer({ onButtonEnable, onPlayStart }: VideoPlayerProps) {
               />
             )}
             
-            {videoConfig.video_type === 'vimeo' && !showPlayOverlay && (
+            {videoConfig.video_type === 'vimeo' && (
               <iframe
                 id="vimeo-player"
                 src={getVimeoEmbedUrl(videoConfig.video_url) || ''}
@@ -554,7 +551,7 @@ function VideoPlayer({ onButtonEnable, onPlayStart }: VideoPlayerProps) {
             
             {showPlayOverlay && (
               <div 
-                className="absolute inset-0 bg-gradient-to-br from-gray-900 via-purple-900/90 to-gray-900 flex flex-col items-center justify-center cursor-pointer z-20"
+                className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center cursor-pointer z-20"
                 onClick={handleManualPlay}
               >
                 <div className="relative mb-6">
